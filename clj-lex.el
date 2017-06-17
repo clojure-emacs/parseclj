@@ -111,6 +111,33 @@
           (clj-lex-token :string (buffer-substring-no-properties pos (point)) pos))
       (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos))))
 
+(defun clj-lex-lookahead (n)
+  (buffer-substring-no-properties (point) (min (+ (point) n) (point-max))))
+
+(defun clj-lex-character ()
+  (let ((pos (point)))
+    (right-char)
+    (cond
+     ((equal (clj-lex-lookahead 3) "tab")
+      (right-char 3)
+      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+
+     ((equal (clj-lex-lookahead 5) "space")
+      (right-char 5)
+      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+
+     ((equal (clj-lex-lookahead 6) "return")
+      (right-char 6)
+      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+
+     ((equal (clj-lex-lookahead 7) "newline")
+      (right-char 7)
+      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+
+     (t
+      (right-char)
+      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos)))))
+
 (defun clj-lex-next ()
   (if (clj-lex-at-eof?)
       (clj-lex-token :eof nil (point))
@@ -136,6 +163,9 @@
 
        ((equal char ?\")
         (clj-lex-string))
+
+       ((equal char ?\\)
+        (clj-lex-character))
 
        ":("))))
 
