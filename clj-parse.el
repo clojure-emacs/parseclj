@@ -32,15 +32,22 @@
 (require 'clj-lex)
 
 (defun clj-parse ()
-  (clj-parse* 'clj-parse-elisp-reducer))
+  (clj-parse-reduce 'clj-parse-edn-reduce1 'clj-parse-edn-reduceN))
 
-(defun clj-parse-elisp-reducer (type value)
+(defun clj-parse-edn-reduce1 (stack token)
+  )
+
+(defun clj-parse-edn-reduceN (stack type coll)
   (cl-case type
     (:whitespace :ws)
-    (:number value)
-    (:list value)))
+    (:number coll)
+    (:list coll)))
 
-(defun clj-parse* (reducer)
+(defun clj-parse-terminal? (token)
+  (cdr (assq ('type token)))
+  )
+
+(defun clj-parse-reduce (reduce1 reducer)
   (let ((stack nil)
         (token (clj-lex-next)))
     (while (not (eq (cdr (assq 'type token)) :eof))
@@ -48,11 +55,14 @@
       ;; (print token)
       ;; (print stack)
       (let-alist token
+        (setf stack
+              (if (clj-parse-terminal? token)
+                  ))
         (cl-case .type
           (:whitespace
-           (push (funcall reducer :whitespace .form) stack))
+           (push (funcall reducer stack :whitespace .form) stack))
           (:number
-           (push (funcall reducer :number .value) stack))
+           (push (funcall reducer stack :number .value) stack))
           (:lparen
            (push token stack))
           (:rparen
@@ -61,7 +71,7 @@
                (push (pop stack) list))
              (pop stack) ;; :lparen
              ;; (print list)
-             (push (funcall reducer :list list) stack)))))
+             (push (funcall reducer stack :list list) stack)))))
       (setq token (clj-lex-next)))
     stack))
 
