@@ -77,7 +77,7 @@
 (defun clj-lex-number ()
   (let* ((pos (point)))
     (while (and (char-after (point))
-                (or (<= ?0 (char-after (point)) ?9)
+                (or (and (<= ?0 (char-after (point))) (<= (char-after (point)) ?9))
                     (eq (char-after (point)) ?.)
                     (eq (char-after (point)) ?M)
                     (eq (char-after (point)) ?r)))
@@ -110,7 +110,7 @@
         (right-char)
         `((type . :rparen) (pos . ,pos)))
 
-       ((<= ?0 char ?9)
+       ((and (<= ?0 char) (<= char ?9))
         (clj-lex-number))
 
        ":("))))
