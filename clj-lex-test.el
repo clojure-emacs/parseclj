@@ -116,7 +116,16 @@
     (goto-char 1)
     (should (equal (clj-lex-next) (clj-lex-token :lbracket "[" 1)))
     (should (equal (clj-lex-next) (clj-lex-token :number "123" 2)))
-    (should (equal (clj-lex-next) (clj-lex-token :rbracket "]" 5)))))
+    (should (equal (clj-lex-next) (clj-lex-token :rbracket "]" 5))))
+
+  (with-temp-buffer
+    (insert "{:count 123}")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :lbrace "{" 1)))
+    (should (equal (clj-lex-next) (clj-lex-token :keyword ":count" 2)))
+    (should (equal (clj-lex-next) (clj-lex-token :whitespace " " 8)))
+    (should (equal (clj-lex-next) (clj-lex-token :number "123" 9)))
+    (should (equal (clj-lex-next) (clj-lex-token :rbrace "}" 12)))))
 
 (ert-deftest clj-lex-test-at-number? ()
   (dolist (str '("123" ".9" "+1" "0" "-456"))

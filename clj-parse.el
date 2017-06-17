@@ -98,7 +98,10 @@
      (:whitespace :ws)
      (:number coll)
      (:list (-butlast (cdr coll)))
-     (:vector (apply #'vector (-butlast (cdr coll)))))
+     (:vector (apply #'vector (-butlast (cdr coll))))
+     (:map (mapcar (lambda (pair)
+                     (cons (car pair) (cadr pair)))
+                   (-partition 2 (-butlast (cdr coll))))))
    stack))
 
 ;; TODO move this to clj-lex
@@ -134,7 +137,8 @@
 
       (cl-case (clj-parse--token-type (car stack))
         (:rparen (setf stack (clj-parse--reduce-coll stack :lparen :list reduceN)))
-        (:rbracket (setf stack (clj-parse--reduce-coll stack :lbracket :vector reduceN))))
+        (:rbracket (setf stack (clj-parse--reduce-coll stack :lbracket :vector reduceN)))
+        (:rbrace (setf stack (clj-parse--reduce-coll stack :lbrace :map reduceN))))
 
 
       (setq token (clj-lex-next)))
