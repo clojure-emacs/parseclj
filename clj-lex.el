@@ -30,6 +30,16 @@
                 (cons (car pair) (cadr pair)))
               (-partition 2 args))))
 
+(defun clj-lex-token-type (token)
+  (and (listp token)
+       (cdr (assq 'type token))))
+
+(defun clj-lex-token? (token)
+  (and (listp token)
+       (consp (car token))
+       (eq 'type (caar token))
+       (not (listp (cdar token)))))
+
 (defun clj-lex-at-whitespace? ()
   (let ((char (char-after (point))))
     (or (equal char ?\ )
@@ -214,7 +224,10 @@
           (cl-case char
             (?{
              (right-char)
-             (clj-lex-token :set "#{" pos)))))
+             (clj-lex-token :set "#{" pos))
+            (?_
+             (right-char)
+             (clj-lex-token :discard "#_" pos)))))
 
        ":("))))
 

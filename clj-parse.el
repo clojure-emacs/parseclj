@@ -93,29 +93,31 @@
     (:character (cons (clj-parse-character (cdr (assq 'form token))) stack))))
 
 (defun clj-parse-edn-reduceN (stack type coll)
-  (cons
-   (cl-case type
-     (:whitespace :ws)
-     (:number coll)
-     (:list (-butlast (cdr coll)))
-     (:set (-butlast (cdr coll)))
-     (:vector (apply #'vector (-butlast (cdr coll))))
-     (:map (mapcar (lambda (pair)
-                     (cons (car pair) (cadr pair)))
-                   (-partition 2 (-butlast (cdr coll))))))
-   stack))
+  (if (eq :discard type)
+      stack
+    (cons
+     (cl-case type
+       (:whitespace :ws)
+       (:number coll)
+       (:list (-butlast (cdr coll)))
+       (:set (-butlast (cdr coll)))
+       (:vector (apply #'vector (-butlast (cdr coll))))
+       (:map (mapcar (lambda (pair)
+                       (cons (car pair) (cadr pair)))
+                     (-partition 2 (-butlast (cdr coll))))))
+     stack)))
 
 ;; TODO move this to clj-lex
-(defun clj-parse--token-type (token)
+(defun clj-lex-token-type (token)
   (and (listp token)
        (cdr (assq 'type token))))
 
 (defun clj-parse--reduce-coll (stack open-token coll-type reducN)
   (let ((coll nil))
     (while (and stack
-                (not (eq (clj-parse--token-type (car stack)) open-token)))
+                (not (eq (clj-lex-token-type (car stack)) open-token)))
       (push (pop stack) coll))
-    (if (eq (clj-parse--token-type (car stack)) open-token)
+    (if (eq (clj-lex-token-type (car stack)) open-token)
         (progn
           (push (pop stack) coll)
           (funcall reduceN stack coll-type coll))
@@ -126,30 +128,35 @@
   (let ((stack nil)
         (token (clj-lex-next)))
 
-    (while (not (eq (clj-parse--token-type token) :eof))
+    (while (not (eq (clj-lex-token-type token) :eof))
       (message "STACK: %S" stack)
       (message "TOKEN: %S\n" token)
 
       (setf stack
-            (if (member (clj-parse--token-type token)
+            (if (member (clj-lex-token-type token)
                         clj-parse--leaf-tokens)
                 (funcall reduce1 stack token)
               (cons token stack)))
 
-      (cl-case (clj-parse--token-type (car stack))
+      ;; Reduce based on the top item on the stack (collections)
+      (cl-case (clj-lex-token-type (car stack))
         (:rparen (setf stack (clj-parse--reduce-coll stack :lparen :list reduceN)))
         (:rbracket (setf stack (clj-parse--reduce-coll stack :lbracket :vector reduceN)))
         (:rbrace
          (let ((open-token (-find (lambda (token)
-                                    (member (clj-parse--token-type token) '(:lbrace :set)))
+                                    (member (clj-lex-token-type token) '(:lbrace :set)))
                                   stack)))
 
-           (cl-case (clj-parse--token-type open-token)
+           (cl-case (clj-lex-token-type open-token)
              (:lbrace
               (setf stack (clj-parse--reduce-coll stack :lbrace :map reduceN)))
              (:set
               (setf stack (clj-parse--reduce-coll stack :set :set reduceN)))))))
 
+      ;; Reduce based on top two items on the stack
+      (if (not (clj-lex-token? (car stack))) ;; top is fully reduced
+          (cl-case (clj-lex-token-type (second stack))
+            (:discard (setf stack (funcall reduceN (cddr stack) :discard (-take 2 stack))))))
 
       (setq token (clj-lex-next)))
 

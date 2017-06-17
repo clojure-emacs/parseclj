@@ -94,7 +94,12 @@
   (with-temp-buffer
     (insert "#{:x}")
     (goto-char 1)
-    (should (equal (clj-parse) '((:x))))))
+    (should (equal (clj-parse) '((:x)))))
+
+  (with-temp-buffer
+    (insert "(10 #_11 12 #_#_ 13 14)")
+    (goto-char 1)
+    (should (equal (clj-parse) '((10 12))))))
 
 (provide 'clj-parse-test)
 
