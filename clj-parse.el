@@ -31,49 +31,62 @@
 
 (require 'clj-lex)
 
-(defun clj-parse ()
-  (clj-parse-reduce 'clj-parse-edn-reduce1 'clj-parse-edn-reduceN))
-
 (defun clj-parse-edn-reduce1 (stack token)
-  )
+  (cl-case (cdr (assq 'type token))
+    (:whitespace stack)
+    (:number (cons (string-to-number (cdr (assq 'form token))) stack))))
 
 (defun clj-parse-edn-reduceN (stack type coll)
-  (cl-case type
-    (:whitespace :ws)
-    (:number coll)
-    (:list coll)))
+  (cons
+   (cl-case type
+     (:whitespace :ws)
+     (:number coll)
+     (:list (-butlast (cdr coll))))
+   stack))
 
-(defun clj-parse-terminal? (token)
-  (cdr (assq ('type token)))
-  )
+(defvar clj-parse--terminal-tokens '(:whitespace :number))
 
-(defun clj-parse-reduce (reduce1 reducer)
+
+(defun clj-parse--token-type (token)
+  (and (listp token) (cdr (assq 'type token))))
+
+(defun clj-parse--unwind-stack (stack target)
+  (let ((result nil))))
+
+(defun clj-parse--reduce-list (stack reducN)
+  (let ((coll nil))
+    (while (and stack (not (eq (clj-parse--token-type (car stack)) :lparen)))
+      (push (pop stack) coll))
+    (if (eq (clj-parse--token-type (car stack)) :lparen)
+        (progn
+          (push (pop stack) coll)
+          (funcall reduceN stack :list coll))
+      ;; Unwound the stack without finding a matching paren: return the original stack
+      (reverse list))))
+
+(defun clj-parse-reduce (reduce1 reduceN)
   (let ((stack nil)
         (token (clj-lex-next)))
-    (while (not (eq (cdr (assq 'type token)) :eof))
-      ;; (prin1 (alist-get 'type token))
-      ;; (print token)
-      ;; (print stack)
-      (let-alist token
-        (setf stack
-              (if (clj-parse-terminal? token)
-                  ))
-        (cl-case .type
-          (:whitespace
-           (push (funcall reducer stack :whitespace .form) stack))
-          (:number
-           (push (funcall reducer stack :number .value) stack))
-          (:lparen
-           (push token stack))
-          (:rparen
-           (let ((list nil))
-             (while (not (and (listp (car stack)) (eq (cdr (assq 'type (car stack))) :lparen)))
-               (push (pop stack) list))
-             (pop stack) ;; :lparen
-             ;; (print list)
-             (push (funcall reducer stack :list list) stack)))))
+
+    (while (not (eq (clj-parse--token-type token) :eof))
+      (message "STACK: %S" stack)
+      (message "TOKEN: %S\n" token)
+
+      (setf stack
+            (if (member (clj-parse--token-type token) clj-parse--terminal-tokens)
+                (funcall reduce1 stack token)
+              (cons token stack)))
+
+      (cl-case (clj-parse--token-type (car stack))
+        (:rparen (setf stack (clj-parse--reduce-list stack reduceN))))
+
       (setq token (clj-lex-next)))
+
+    (message "RESULT: %S" stack)
     stack))
+
+(defun clj-parse ()
+  (clj-parse-reduce 'clj-parse-edn-reduce1 'clj-parse-edn-reduceN))
 
 (provide 'clj-parse)
 ;;; clj-parse.el ends here

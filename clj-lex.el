@@ -20,6 +20,15 @@
 
 ;; A reader for EDN data files and parser for Clojure source files.
 
+(require 'dash)
+
+(defun clj-lex-token (type form pos &rest args)
+  `((type . ,type)
+    (form . ,form)
+    (pos . , pos)
+    ,@(mapcar (lambda (pair)
+                (cons (car pair) (cadr pair)))
+              (-partition 2 args))))
 
 (defun clj-lex-whitespace ()
   (let* ((pos (point)))
@@ -29,7 +38,9 @@
                (equal (char-after (point)) ?\r)
                (equal (char-after (point)) ?,))
       (right-char))
-    `((type . :whitespace) (form . ,(buffer-substring-no-properties pos (point))) (pos . ,pos))))
+    (clj-lex-token :whitespace
+                   (buffer-substring-no-properties pos (point))
+                   pos)))
 
 
 (defun clj-lex-number ()
@@ -42,14 +53,11 @@
       (right-char))
     (let* ((num-str (buffer-substring-no-properties pos (point))))
       ;; TODO handle radix, bignuM
-      `((type . :number)
-        (value . ,(string-to-number num-str))
-        (form . ,num-str)
-        (pos . ,pos)))))
+      (clj-lex-token :number num-str pos))))
 
 (defun clj-lex-next ()
   (if (eq (point) (point-max))
-      `((type . :eof) (pos . ,(point)))
+      (clj-lex-token :eof nil (point))
     (let ((char (char-after (point)))
           (pos  (point)))
       (cond
@@ -62,11 +70,11 @@
 
        ((equal char ?\()
         (right-char)
-        `((type . :lparen) (pos . ,pos)))
+        (clj-lex-token :lparen "(" pos))
 
        ((equal char ?\))
         (right-char)
-        `((type . :rparen) (pos . ,pos)))
+        (clj-lex-token :rparen ")" pos))
 
        ((and (<= ?0 char) (<= char ?9))
         (clj-lex-number))

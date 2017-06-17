@@ -27,6 +27,11 @@
 
 (ert-deftest clj-parse-test ()
   (with-temp-buffer
+    (insert "(1 2 3)")
+    (goto-char 1)
+    (should (equal (clj-parse) '((1 2 3)))))
+
+  (with-temp-buffer
     (insert "()")
     (goto-char 1)
     (should (equal (clj-parse) '(()))))
@@ -35,6 +40,9 @@
     (insert "(1)")
     (goto-char 1)
     (should (equal (clj-parse) '((1))))))
+
+;; (ert-deftest clj-parse-test--reduce-list ()
+;;   (clj-parse-test--reduce-list ))
 
 (provide 'clj-parse-test)
 

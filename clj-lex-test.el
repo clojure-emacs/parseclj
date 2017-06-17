@@ -27,23 +27,28 @@
   (with-temp-buffer
     (insert "()")
     (goto-char 1)
-    (should (equal (clj-lex-next) '((type . :lparen) (pos . 1))))
-    (should (equal (clj-lex-next) '((type . :rparen) (pos . 2))))
-    (should (equal (clj-lex-next) '((type . :eof) (pos . 3)))))
+    (should (equal (clj-lex-next) '((type . :lparen) (form . "(") (pos . 1))))
+    (should (equal (clj-lex-next) '((type . :rparen) (form . ")") (pos . 2))))
+    (should (equal (clj-lex-next) '((type . :eof) (form . nil) (pos . 3)))))
 
   (with-temp-buffer
     (insert "123")
     (goto-char 1)
     (should (equal (clj-lex-next) '((type . :number)
-                                       (value . 123)
-                                       (form . "123")
-                                       (pos . 1)))))
+                                    (form . "123")
+                                    (pos . 1)))))
 
   (with-temp-buffer
     (insert " \t  \n")
     (goto-char 1)
     (should (equal (clj-lex-next) '((type . :whitespace) (form . " \t  \n") (pos . 1))))))
 
+
+(ert-deftest clj-lex-test-token ()
+  (should (equal (clj-lex-token :whitespace ",,," 10)
+                 '((type . :whitespace)
+                   (form . ",,,")
+                   (pos . 10)))))
 
 (provide 'clj-lex-test)
 
