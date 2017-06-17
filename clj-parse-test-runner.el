@@ -15,6 +15,7 @@
   (package-install 'let-alist))
 
 (package-install 'package-lint)
+(package-install 'dash)
 
 (let ((files '("clj-parse.el" "clj-lex.el" "clj-parse-test.el" "clj-lex-test.el"))
       (pwd (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pwd"))))

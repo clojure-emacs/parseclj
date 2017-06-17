@@ -4,7 +4,7 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((let-alist "1.0.5"))
+;; Package-Requires: ((let-alist "1.0.5") (dash "2.12.0"))
 ;; Version: 0.1.0
 
 ;; This program is free software; you can redistribute it and/or modify it under

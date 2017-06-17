@@ -52,4 +52,4 @@
 
 (provide 'clj-lex-test)
 
-;;; clj-lext-test.el ends here
+;;; clj-lex-test.el ends here
