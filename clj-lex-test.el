@@ -61,7 +61,13 @@
   (with-temp-buffer
     (insert "hello-world")
     (goto-char 1)
-    (should (equal (clj-lex-next) '((type . :symbol) (form . "hello-world") (pos . 1))))))
+    (should (equal (clj-lex-next) '((type . :symbol) (form . "hello-world") (pos . 1)))))
+
+  ;; (with-temp-buffer
+  ;;   (insert "\\newline\\return\\space\\tab\\a\\b\\c")
+  ;;   (goto-char 1)
+  ;;   (should (equal (clj-lex-next) (clj-lex-token :character "\\newline" 1))))
+  )
 
 (ert-deftest clj-lex-test-at-number? ()
   (dolist (str '("123" ".9" "+1" "0" "-456"))
@@ -105,7 +111,21 @@
   (should (equal (clj-lex-symbol-rest? ?~) nil))
   (should (equal (clj-lex-symbol-rest? ? ) nil)))
 
+(ert-deftest clj-lex-test-string ()
+  (with-temp-buffer
+    (insert "\"abc\"")
+    (goto-char 1)
+    (should (equal (clj-lex-string) (clj-lex-token :string "\"abc\"" 1))))
 
+  (with-temp-buffer
+    (insert "\"abc")
+    (goto-char 1)
+    (should (equal (clj-lex-string) (clj-lex-token :lex-error "\"abc" 1))))
+
+  (with-temp-buffer
+    (insert "\"abc\\\"\"")"abc\""
+    (goto-char 1)
+    (should (equal (clj-lex-string) (clj-lex-token :string "\"abc\\\"\"" 1)))))
 
 (provide 'clj-lex-test)
 

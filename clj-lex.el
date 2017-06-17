@@ -97,6 +97,20 @@
        ((equal sym "false") (clj-lex-token :false "false" pos))
        (t (clj-lex-token :symbol sym pos))))))
 
+(defun clj-lex-string ()
+  (let ((pos (point)))
+    (right-char)
+    (while (not (or (equal (char-after (point)) ?\") (clj-lex-at-eof?)))
+      (message (buffer-substring-no-properties pos (point)))
+      (if (equal (char-after (point)) ?\\)
+          (right-char 2)
+        (right-char)))
+    (if (equal (char-after (point)) ?\")
+        (progn
+          (right-char)
+          (clj-lex-token :string (buffer-substring-no-properties pos (point)) pos))
+      (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos))))
+
 (defun clj-lex-next ()
   (if (clj-lex-at-eof?)
       (clj-lex-token :eof nil (point))
@@ -119,6 +133,9 @@
 
        ((clj-lex-symbol-start? char)
         (clj-lex-symbol))
+
+       ((equal char ?\")
+        (clj-lex-string))
 
        ":("))))
 

@@ -49,7 +49,17 @@
   (with-temp-buffer
     (insert "((.9 abc (true) (hello)))")
     (goto-char 1)
-    (should (equal (clj-parse) '(((0.9 abc (t) (hello))))))))
+    (should (equal (clj-parse) '(((0.9 abc (t) (hello)))))))
+
+  (with-temp-buffer
+    (insert "\"abc hello \\t\\\"x\"")
+    (goto-char 1)
+    (should (equal (clj-parse) '("abc hello \t\"x"))))
+
+  (with-temp-buffer
+    (insert "(\"---\\f---\\\"-'\\'-\\\\-\\r\\n\")")
+    (goto-char 1)
+    (should (equal (clj-parse) '(("---\f---\"-''-\\-\r\n"))))))
 
 ;; (ert-deftest clj-parse-test--reduce-list ()
 ;;   (clj-parse-test--reduce-list ))
@@ -57,3 +67,5 @@
 (provide 'clj-parse-test)
 
 ;;; clj-parse-test.el ends here
+
+"hello"

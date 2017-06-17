@@ -24,9 +24,9 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 ;; Before emacs 25.1 it's an ELPA package
 (require 'let-alist)
+(require 'cl-lib)
 (require 'clj-lex)
 
 (defvar clj-parse--leaf-tokens '(:whitespace
@@ -34,8 +34,27 @@
                                  :nil
                                  :true
                                  :false
-                                 :symbol)
+                                 :symbol
+                                 :string)
   "Tokens that represent leaf nodes in the AST.")
+
+;; Java/JavaScript strings support other escape codes like "\u0111", but
+;; these are the only ones mentioned in the EDN spec.
+;; Although of course for bare characters
+(defun clj-parse-string (s)
+  (replace-regexp-in-string "\\\\[tbnrf'\"\\]"
+                            (lambda (x)
+                              (cl-case (elt x 1)
+                                (?t "\t")
+                                (?f "\f")
+                                (?\" "\"")
+                                (?r "\r")
+                                (?n "\n")
+                                (?\\ "\\\\")
+                                (t (substring x 1 2))))
+                            (substring s 1 -1)))
+
+(replace-regexp-in-string "x" "\\\\" "x")
 
 (defun clj-parse-edn-reduce1 (stack token)
   (cl-case (cdr (assq 'type token))
@@ -44,7 +63,8 @@
     (:nil (cons nil stack))
     (:true (cons t stack))
     (:false (cons nil stack))
-    (:symbol (cons (intern (cdr (assq 'form token))) stack))))
+    (:symbol (cons (intern (cdr (assq 'form token))) stack))
+    (:string (cons (clj-parse-string (cdr (assq 'form token))) stack))))
 
 (defun clj-parse-edn-reduceN (stack type coll)
   (cons
@@ -61,7 +81,8 @@
 
 (defun clj-parse--reduce-list (stack reducN)
   (let ((coll nil))
-    (while (and stack (not (eq (clj-parse--token-type (car stack)) :lparen)))
+    (while (and stack
+                (not (eq (clj-parse--token-type (car stack)) :lparen)))
       (push (pop stack) coll))
     (if (eq (clj-parse--token-type (car stack)) :lparen)
         (progn
@@ -79,7 +100,8 @@
       (message "TOKEN: %S\n" token)
 
       (setf stack
-            (if (member (clj-parse--token-type token) clj-parse--leaf-tokens)
+            (if (member (clj-parse--token-type token)
+                        clj-parse--leaf-tokens)
                 (funcall reduce1 stack token)
               (cons token stack)))
 
@@ -95,4 +117,5 @@
   (clj-parse-reduce 'clj-parse-edn-reduce1 'clj-parse-edn-reduceN))
 
 (provide 'clj-parse)
+
 ;;; clj-parse.el ends here
