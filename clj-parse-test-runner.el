@@ -13,6 +13,8 @@
 (when (not (fboundp 'let-alist))
   (package-install 'let-alist))
 
+(package-install 'package-lint)
+
 (require 'ert)
 
 ;; Tried
@@ -22,4 +24,17 @@
 (let ((pwd (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pwd"))))
   (load (concat pwd "/clj-parse.el")))
 
-(ert-run-tests-batch-and-exit)
+(if (getenv "CLJ_PARSE_LINT")
+    (let ((success t))
+      (dolist (file '("clj-parse.el"))
+        (with-temp-buffer
+          (insert-file-contents file t)
+          (emacs-lisp-mode)
+          (let ((checking-result (package-lint-buffer)))
+            (when checking-result
+              (setq success nil)
+              (message "In `%s':" file)
+              (pcase-dolist (`(,line ,col ,type ,message) checking-result)
+                (message "  at %d:%d: %s: %s" line col type message))))))
+      (kill-emacs (if success 0 1)))
+  (ert-run-tests-batch-and-exit))
