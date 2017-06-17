@@ -41,7 +41,7 @@
 (defun clj-parse* (reducer)
   (let ((stack nil)
         (token (clj-lex-next)))
-    (while (not (eq (alist-get 'type token) :eof))
+    (while (not (eq (cdr (assq 'type token)) :eof))
       ;; (prin1 (alist-get 'type token))
       ;; (print token)
       ;; (print stack)
@@ -55,7 +55,7 @@
            (push token stack))
           (:rparen
            (let ((list nil))
-             (while (not (and (listp (car stack)) (eq (alist-get 'type (car stack)) :lparen)))
+             (while (not (and (listp (car stack)) (eq (cdr (assq 'type (car stack))) :lparen)))
                (push (pop stack) list))
              (pop stack) ;; :lparen
              ;; (print list)
