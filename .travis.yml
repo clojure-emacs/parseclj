@@ -17,5 +17,5 @@ before_install:
 script:
   - $EMACS --version
   - ls /usr/bin /usr/local/bin | grep emacs
-  # - $EMACS --version | grep $VERSION
+  - $EMACS --version | grep $VERSION
   - $EMACS -batch -l clj-parse-test-runner.el
