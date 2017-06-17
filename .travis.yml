@@ -1,12 +1,7 @@
 language: emacs-lisp
-matrix:
-  env:
-    - EMACS=emacs-24.3
-      PPA=ppa:ubuntu-elisp
-      PACKAGE=emacs-snapshot
-    - EMACS=emacs-25.1
-      PPA=ppa:kelleyk/emacs
-      PACKAGE=emacs25
+env:
+  - EMACS=emacs-24.3 PPA=ppa:ubuntu-elisp PACKAGE=emacs-snapshot
+  - EMACS=emacs-25.1 PPA=ppa:kelleyk/emacs PACKAGE=emacs25
 
 before_install:
   - sudo add-apt-repository -y $PPA
