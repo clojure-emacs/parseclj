@@ -34,7 +34,11 @@
 (defun clj-parse-edn-reduce1 (stack token)
   (cl-case (cdr (assq 'type token))
     (:whitespace stack)
-    (:number (cons (string-to-number (cdr (assq 'form token))) stack))))
+    (:number (cons (string-to-number (cdr (assq 'form token))) stack))
+    (:nil (cons nil stack))
+    (:true (cons t stack))
+    (:false (cons nil stack))
+    (:symbol (cons (intern (cdr (assq 'form token))) stack))))
 
 (defun clj-parse-edn-reduceN (stack type coll)
   (cons
@@ -44,7 +48,7 @@
      (:list (-butlast (cdr coll))))
    stack))
 
-(defvar clj-parse--terminal-tokens '(:whitespace :number))
+(defvar clj-parse--leaf-tokens '(:whitespace :number :nil :true :false :symbol))
 
 
 (defun clj-parse--token-type (token)
@@ -73,7 +77,7 @@
       (message "TOKEN: %S\n" token)
 
       (setf stack
-            (if (member (clj-parse--token-type token) clj-parse--terminal-tokens)
+            (if (member (clj-parse--token-type token) clj-parse--leaf-tokens)
                 (funcall reduce1 stack token)
               (cons token stack)))
 

@@ -30,42 +30,80 @@
                 (cons (car pair) (cadr pair)))
               (-partition 2 args))))
 
+(defun clj-lex-at-whitespace? ()
+  (let ((char (char-after (point))))
+    (or (equal char ?\ )
+        (equal char ?\t)
+        (equal char ?\n)
+        (equal char ?\r)
+        (equal char ?,))))
+
+(defun clj-lex-at-eof? ()
+  (eq (point) (point-max)))
+
 (defun clj-lex-whitespace ()
-  (let* ((pos (point)))
-    (while (or (equal (char-after (point)) ?\ )
-               (equal (char-after (point)) ?\t)
-               (equal (char-after (point)) ?\n)
-               (equal (char-after (point)) ?\r)
-               (equal (char-after (point)) ?,))
+  (let ((pos (point)))
+    (while (clj-lex-at-whitespace?)
       (right-char))
     (clj-lex-token :whitespace
                    (buffer-substring-no-properties pos (point))
                    pos)))
 
-
 (defun clj-lex-number ()
-  (let* ((pos (point)))
+  (let ((pos (point)))
     (while (and (char-after (point))
                 (or (and (<= ?0 (char-after (point))) (<= (char-after (point)) ?9))
                     (eq (char-after (point)) ?.)
                     (eq (char-after (point)) ?M)
                     (eq (char-after (point)) ?r)))
       (right-char))
-    (let* ((num-str (buffer-substring-no-properties pos (point))))
-      ;; TODO handle radix, bignuM
-      (clj-lex-token :number num-str pos))))
+    (clj-lex-token :number
+                   (buffer-substring-no-properties pos (point))
+                   pos)))
+
+
+(defun clj-lex-digit? (char)
+  (and char (<= ?0 char) (<= char ?9)))
+
+(defun clj-lex-at-number? ()
+  (let ((char (char-after (point))))
+    (or (clj-lex-digit? char)
+        (and (member char '(?- ?+ ?.))
+             (clj-lex-digit? (char-after (1+ (point))))))))
+
+(defun clj-lex-symbol-start? (char)
+  "Symbols begin with a non-numeric character and can contain
+   alphanumeric characters and . * + ! - _ ? $ % & = < >. If -, +
+   or . are the first character, the second character (if any)
+   must be non-numeric."
+  (not (not (and char
+                 (or (and (<= ?a char) (<= char ?z))
+                     (and (<= ?A char) (<= char ?Z))
+                     (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?>)))))))
+
+(defun clj-lex-symbol-rest? (char)
+  (or (clj-lex-symbol-start? char)
+      (clj-lex-digit? char)))
+
+(defun clj-lex-symbol ()
+  (let ((pos (point)))
+    (right-char)
+    (while (clj-lex-symbol-rest? (char-after (point)))
+      (right-char))
+    (let ((sym (buffer-substring-no-properties pos (point))))
+      (cond
+       ((equal sym "nil") (clj-lex-token :nil "nil" pos))
+       ((equal sym "true") (clj-lex-token :true "true" pos))
+       ((equal sym "false") (clj-lex-token :false "false" pos))
+       (t (clj-lex-token :symbol sym pos))))))
 
 (defun clj-lex-next ()
-  (if (eq (point) (point-max))
+  (if (clj-lex-at-eof?)
       (clj-lex-token :eof nil (point))
     (let ((char (char-after (point)))
           (pos  (point)))
       (cond
-       ((or (equal char ?\ )
-            (equal char ?\t)
-            (equal char ?\n)
-            (equal char ?\r)
-            (equal char ?,))
+       ((clj-lex-at-whitespace?)
         (clj-lex-whitespace))
 
        ((equal char ?\()
@@ -76,8 +114,11 @@
         (right-char)
         (clj-lex-token :rparen ")" pos))
 
-       ((and (<= ?0 char) (<= char ?9))
+       ((clj-lex-at-number?)
         (clj-lex-number))
+
+       ((clj-lex-symbol-start? char)
+        (clj-lex-symbol))
 
        ":("))))
 
