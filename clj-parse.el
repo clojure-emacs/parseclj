@@ -23,8 +23,7 @@
 
 ;;; Code:
 
-;; for (case ...)
-(eval-when-compile (require 'cl))
+(require 'cl-lib)
 
 ;; Before emacs 25.1 it's an ELPA package
 (require 'let-alist)
@@ -33,7 +32,7 @@
   (clj-parse* 'clj-parse-elisp-reducer))
 
 (defun clj-parse-elisp-reducer (type value)
-  (case type
+  (cl-case type
     (:whitespace :ws)
     (:number value)
     (:list value)))
@@ -46,7 +45,7 @@
       ;; (print token)
       ;; (print stack)
       (let-alist token
-        (case .type
+        (cl-case .type
           (:whitespace
            (push (funcall reducer :whitespace .form) stack))
           (:number

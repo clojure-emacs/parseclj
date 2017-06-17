@@ -9,5 +9,5 @@ before_install:
   - sudo apt-get install -qq $PACKAGE
 
 script:
-  - $EMACS --version
-  - $EMACS -batch -l clj-parse-test-runner.el
+  - emacs --version
+  - emacs -batch -l clj-parse-test-runner.el
