@@ -4,7 +4,7 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((dash "") (let-alist ""))
+;; Package-Requires: ((let-alist ""))
 
 ;; This program is free software; you can redistribute it and/or modify it under
 ;; the terms of the Mozilla Public License Version 2.0
@@ -23,6 +23,12 @@
 
 ;;; Code:
 
+;; for (case ...)
+(eval-when-compile (require 'cl))
+
+;; Before emacs 25.1 it's an ELPA package
+(require 'let-alist)
+
 (defun clj-parse ()
   (clj-parse* 'clj-parse-elisp-reducer))
 
@@ -36,8 +42,8 @@
   (let ((stack nil)
         (token (clj-lex-next)))
     (while (not (eq (alist-get 'type token) :eof))
-      ;;(prin1 (alist-get 'type token))
-      (print token)
+      ;; (prin1 (alist-get 'type token))
+      ;; (print token)
       ;; (print stack)
       (let-alist token
         (case .type
@@ -52,7 +58,7 @@
              (while (not (and (listp (car stack)) (eq (alist-get 'type (car stack)) :lparen)))
                (push (pop stack) list))
              (pop stack) ;; :lparen
-             (print list)
+             ;; (print list)
              (push (funcall reducer :list list) stack)))))
       (setq token (clj-lex-next)))
     stack))
@@ -70,10 +76,11 @@
 
 (defun clj-lex-number ()
   (let* ((pos (point)))
-    (while (or (<= ?0 (char-after (point)) ?9)
-               (eq (char-after (point)) ?.)
-               (eq (char-after (point)) ?M)
-               (eq (char-after (point)) ?r))
+    (while (and (char-after (point))
+                (or (<= ?0 (char-after (point)) ?9)
+                    (eq (char-after (point)) ?.)
+                    (eq (char-after (point)) ?M)
+                    (eq (char-after (point)) ?r)))
       (right-char))
     (let* ((num-str (buffer-substring-no-properties pos (point))))
       ;; TODO handle radix, bignuM
@@ -112,12 +119,12 @@
   (with-temp-buffer
     (insert "()")
     (goto-char 1)
-    (should (equal (clj-parse) '())))
+    (should (equal (clj-parse) '(()))))
 
   (with-temp-buffer
     (insert "(1)")
     (goto-char 1)
-    (should (equal (clj-parse) '(1)))))
+    (should (equal (clj-parse) '((1))))))
 
 (ert-deftest clj-lex-next-test ()
   (with-temp-buffer
@@ -144,3 +151,4 @@
 
 (provide 'clj-parse)
 ;;; clj-parse.el ends here
+123
