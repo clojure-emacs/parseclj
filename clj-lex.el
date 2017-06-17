@@ -134,6 +134,14 @@
       (right-char 7)
       (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
+     ((equal (char-after (point)) ?u)
+      (right-char 5)
+      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+
+     ((equal (char-after (point)) ?o)
+      (right-char 4)
+      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+
      (t
       (right-char)
       (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos)))))

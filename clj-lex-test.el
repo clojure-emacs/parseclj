@@ -72,9 +72,24 @@
     (should (equal (clj-lex-next) (clj-lex-token :character "\\tab" 22)))
     (should (equal (clj-lex-next) (clj-lex-token :character "\\a" 26)))
     (should (equal (clj-lex-next) (clj-lex-token :character "\\b" 28)))
-    (should (equal (clj-lex-next) (clj-lex-token :character "\\c" 30)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\c" 30))))
 
-    ))
+  (with-temp-buffer
+    (insert "\\newline\\return\\space\\tab\\a\\b\\c")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\newline" 1)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\return" 9)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\space" 16)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\tab" 22)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\a" 26)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\b" 28)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\c" 30))))
+
+  (with-temp-buffer
+    (insert "\\u0078\\o170")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\u0078" 1)))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\o170" 7)))))
 
 (ert-deftest clj-lex-test-at-number? ()
   (dolist (str '("123" ".9" "+1" "0" "-456"))

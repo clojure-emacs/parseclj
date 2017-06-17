@@ -35,7 +35,8 @@
                                  :true
                                  :false
                                  :symbol
-                                 :string)
+                                 :string
+                                 :character)
   "Tokens that represent leaf nodes in the AST.")
 
 ;; Java/JavaScript strings support other escape codes like "\u0111", but
@@ -54,7 +55,19 @@
                                 (t (substring x 1 2))))
                             (substring s 1 -1)))
 
-(replace-regexp-in-string "x" "\\\\" "x")
+
+
+(defun clj-parse-character (c)
+  (let* ((form (cdr (assq 'form token)))
+         (first-char (elt form 1)))
+    (cond
+     ((equal form "\\newline") ?\n)
+     ((equal form "\\return") ?\r)
+     ((equal form "\\space") ?\ )
+     ((equal form "\\tab") ?\t)
+     ((eq first-char ?u) (string-to-number (substring form 2) 16))
+     ((eq first-char ?o) (string-to-number (substring form 2) 8))
+     (t first-char))))
 
 (defun clj-parse-edn-reduce1 (stack token)
   (cl-case (cdr (assq 'type token))
@@ -64,7 +77,8 @@
     (:true (cons t stack))
     (:false (cons nil stack))
     (:symbol (cons (intern (cdr (assq 'form token))) stack))
-    (:string (cons (clj-parse-string (cdr (assq 'form token))) stack))))
+    (:string (cons (clj-parse-string (cdr (assq 'form token))) stack))
+    (:character (cons (clj-parse-character (cdr (assq 'form token))) stack))))
 
 (defun clj-parse-edn-reduceN (stack type coll)
   (cons

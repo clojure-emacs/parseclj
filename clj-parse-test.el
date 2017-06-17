@@ -59,13 +59,13 @@
   (with-temp-buffer
     (insert "(\"---\\f---\\\"-'\\'-\\\\-\\r\\n\")")
     (goto-char 1)
-    (should (equal (clj-parse) '(("---\f---\"-''-\\-\r\n"))))))
+    (should (equal (clj-parse) '(("---\f---\"-''-\\-\r\n")))))
 
-;; (ert-deftest clj-parse-test--reduce-list ()
-;;   (clj-parse-test--reduce-list ))
+  (with-temp-buffer
+    (insert "(\\newline \\return \\space \\tab \\a \\b \\c \\u0078 \\o171)")
+    (goto-char 1)
+    (should (equal (clj-parse) '((?\n ?\r ?\ ?\t ?a ?b ?c ?x ?y))))))
 
 (provide 'clj-parse-test)
 
 ;;; clj-parse-test.el ends here
-
-"hello"
