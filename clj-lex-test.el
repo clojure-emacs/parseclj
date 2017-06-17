@@ -94,7 +94,22 @@
   (with-temp-buffer
     (insert "\"\\u0078\\o170\"")
     (goto-char 1)
-    (should (equal (clj-lex-next) (clj-lex-token :string "\"\\u0078\\o170\"" 1)))))
+    (should (equal (clj-lex-next) (clj-lex-token :string "\"\\u0078\\o170\"" 1))))
+
+  (with-temp-buffer
+    (insert ":hello-world")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :keyword ":hello-world" 1))))
+
+  (with-temp-buffer
+    (insert "::hello-world")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :keyword "::hello-world" 1))))
+
+  (with-temp-buffer
+    (insert ":::hello-world")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :lex-error ":::" 1 'error-type :invalid-keyword)))))
 
 (ert-deftest clj-lex-test-at-number? ()
   (dolist (str '("123" ".9" "+1" "0" "-456"))

@@ -74,7 +74,12 @@
   (with-temp-buffer
     (insert "\"\\u0078 \\o171\"")
     (goto-char 1)
-    (should (equal (clj-parse) '("x y")))))
+    (should (equal (clj-parse) '("x y"))))
+
+  (with-temp-buffer
+    (insert ":foo-bar")
+    (goto-char 1)
+    (should (equal (clj-parse) '(:foo-bar)))))
 
 (provide 'clj-parse-test)
 

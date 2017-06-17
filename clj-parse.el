@@ -35,6 +35,7 @@
                                  :true
                                  :false
                                  :symbol
+                                 :keyword
                                  :string
                                  :character)
   "Tokens that represent leaf nodes in the AST.")
@@ -87,6 +88,7 @@
     (:true (cons t stack))
     (:false (cons nil stack))
     (:symbol (cons (intern (cdr (assq 'form token))) stack))
+    (:keyword (cons (intern (cdr (assq 'form token))) stack))
     (:string (cons (clj-parse-string (cdr (assq 'form token))) stack))
     (:character (cons (clj-parse-character (cdr (assq 'form token))) stack))))
 

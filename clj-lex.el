@@ -146,6 +146,20 @@
       (right-char)
       (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos)))))
 
+(defun clj-lex-keyword ()
+  (let ((pos (point)))
+    (right-char)
+    (when (equal (char-after (point)) ?:)
+      (right-char))
+    (if (clj-lex-symbol-start? (char-after (point)))
+        (progn
+          (while (clj-lex-symbol-rest? (char-after (point)))
+            (right-char))
+          (clj-lex-token :keyword (buffer-substring-no-properties pos (point)) pos))
+      (progn
+        (right-char)
+        (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword)))))
+
 (defun clj-lex-next ()
   (if (clj-lex-at-eof?)
       (clj-lex-token :eof nil (point))
@@ -174,6 +188,9 @@
 
        ((equal char ?\\)
         (clj-lex-character))
+
+       ((equal char ?:)
+        (clj-lex-keyword))
 
        ":("))))
 
