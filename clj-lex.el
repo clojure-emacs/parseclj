@@ -208,6 +208,14 @@
        ((equal char ?:)
         (clj-lex-keyword))
 
+       ((equal char ?#)
+        (right-char)
+        (let ((char (char-after (point))))
+          (cl-case char
+            (?{
+             (right-char)
+             (clj-lex-token :set "#{" pos)))))
+
        ":("))))
 
 (provide 'clj-lex)

@@ -89,8 +89,12 @@
   (with-temp-buffer
     (insert "{:count 123}")
     (goto-char 1)
-    (should (equal (clj-parse) '(((:count . 123)))))))
+    (should (equal (clj-parse) '(((:count . 123))))))
 
+  (with-temp-buffer
+    (insert "#{:x}")
+    (goto-char 1)
+    (should (equal (clj-parse) '((:x))))))
 
 (provide 'clj-parse-test)
 

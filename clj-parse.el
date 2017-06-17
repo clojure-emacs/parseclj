@@ -98,6 +98,7 @@
      (:whitespace :ws)
      (:number coll)
      (:list (-butlast (cdr coll)))
+     (:set (-butlast (cdr coll)))
      (:vector (apply #'vector (-butlast (cdr coll))))
      (:map (mapcar (lambda (pair)
                      (cons (car pair) (cadr pair)))
@@ -138,7 +139,16 @@
       (cl-case (clj-parse--token-type (car stack))
         (:rparen (setf stack (clj-parse--reduce-coll stack :lparen :list reduceN)))
         (:rbracket (setf stack (clj-parse--reduce-coll stack :lbracket :vector reduceN)))
-        (:rbrace (setf stack (clj-parse--reduce-coll stack :lbrace :map reduceN))))
+        (:rbrace
+         (let ((open-token (-find (lambda (token)
+                                    (member (clj-parse--token-type token) '(:lbrace :set)))
+                                  stack)))
+
+           (cl-case (clj-parse--token-type open-token)
+             (:lbrace
+              (setf stack (clj-parse--reduce-coll stack :lbrace :map reduceN)))
+             (:set
+              (setf stack (clj-parse--reduce-coll stack :set :set reduceN)))))))
 
 
       (setq token (clj-lex-next)))
