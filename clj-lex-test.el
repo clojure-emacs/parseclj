@@ -89,7 +89,12 @@
     (insert "\\u0078\\o170")
     (goto-char 1)
     (should (equal (clj-lex-next) (clj-lex-token :character "\\u0078" 1)))
-    (should (equal (clj-lex-next) (clj-lex-token :character "\\o170" 7)))))
+    (should (equal (clj-lex-next) (clj-lex-token :character "\\o170" 7))))
+
+  (with-temp-buffer
+    (insert "\"\\u0078\\o170\"")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :string "\"\\u0078\\o170\"" 1)))))
 
 (ert-deftest clj-lex-test-at-number? ()
   (dolist (str '("123" ".9" "+1" "0" "-456"))
