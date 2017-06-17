@@ -44,7 +44,12 @@
   (with-temp-buffer
     (insert "(nil true false hello-world)")
     (goto-char 1)
-    (should (equal (clj-parse) '((nil t nil hello-world))))))
+    (should (equal (clj-parse) '((nil t nil hello-world)))))
+
+  (with-temp-buffer
+    (insert "((.9 abc (true) (hello)))")
+    (goto-char 1)
+    (should (equal (clj-parse) '(((0.9 abc (t) (hello))))))))
 
 ;; (ert-deftest clj-parse-test--reduce-list ()
 ;;   (clj-parse-test--reduce-list ))

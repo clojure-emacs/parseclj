@@ -25,11 +25,17 @@
 ;;; Code:
 
 (require 'cl-lib)
-
 ;; Before emacs 25.1 it's an ELPA package
 (require 'let-alist)
-
 (require 'clj-lex)
+
+(defvar clj-parse--leaf-tokens '(:whitespace
+                                 :number
+                                 :nil
+                                 :true
+                                 :false
+                                 :symbol)
+  "Tokens that represent leaf nodes in the AST.")
 
 (defun clj-parse-edn-reduce1 (stack token)
   (cl-case (cdr (assq 'type token))
@@ -48,14 +54,10 @@
      (:list (-butlast (cdr coll))))
    stack))
 
-(defvar clj-parse--leaf-tokens '(:whitespace :number :nil :true :false :symbol))
-
-
+;; TODO move this to clj-lex
 (defun clj-parse--token-type (token)
-  (and (listp token) (cdr (assq 'type token))))
-
-(defun clj-parse--unwind-stack (stack target)
-  (let ((result nil))))
+  (and (listp token)
+       (cdr (assq 'type token))))
 
 (defun clj-parse--reduce-list (stack reducN)
   (let ((coll nil))
