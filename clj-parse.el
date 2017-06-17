@@ -4,7 +4,8 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((let-alist ""))
+;; Package-Requires: ((let-alist "1.0.5"))
+;; Version: 0.1.0
 
 ;; This program is free software; you can redistribute it and/or modify it under
 ;; the terms of the Mozilla Public License Version 2.0
@@ -27,6 +28,8 @@
 
 ;; Before emacs 25.1 it's an ELPA package
 (require 'let-alist)
+
+(require 'clj-lex)
 
 (defun clj-parse ()
   (clj-parse* 'clj-parse-elisp-reducer))
@@ -62,92 +65,5 @@
       (setq token (clj-lex-next)))
     stack))
 
-(defun clj-lex-whitespace ()
-  (let* ((pos (point)))
-    (while (or (equal (char-after (point)) ?\ )
-               (equal (char-after (point)) ?\t)
-               (equal (char-after (point)) ?\n)
-               (equal (char-after (point)) ?\r)
-               (equal (char-after (point)) ?,))
-      (right-char))
-    `((type . :whitespace) (form . ,(buffer-substring-no-properties pos (point))) (pos . ,pos))))
-
-
-(defun clj-lex-number ()
-  (let* ((pos (point)))
-    (while (and (char-after (point))
-                (or (and (<= ?0 (char-after (point))) (<= (char-after (point)) ?9))
-                    (eq (char-after (point)) ?.)
-                    (eq (char-after (point)) ?M)
-                    (eq (char-after (point)) ?r)))
-      (right-char))
-    (let* ((num-str (buffer-substring-no-properties pos (point))))
-      ;; TODO handle radix, bignuM
-      `((type . :number)
-        (value . ,(string-to-number num-str))
-        (form . ,num-str)
-        (pos . ,pos)))))
-
-(defun clj-lex-next ()
-  (if (eq (point) (point-max))
-      `((type . :eof) (pos . ,(point)))
-    (let ((char (char-after (point)))
-          (pos  (point)))
-      (cond
-       ((or (equal char ?\ )
-            (equal char ?\t)
-            (equal char ?\n)
-            (equal char ?\r)
-            (equal char ?,))
-        (clj-lex-whitespace))
-
-       ((equal char ?\()
-        (right-char)
-        `((type . :lparen) (pos . ,pos)))
-
-       ((equal char ?\))
-        (right-char)
-        `((type . :rparen) (pos . ,pos)))
-
-       ((and (<= ?0 char) (<= char ?9))
-        (clj-lex-number))
-
-       ":("))))
-
-(ert-deftest clj-parse-test ()
-  (with-temp-buffer
-    (insert "()")
-    (goto-char 1)
-    (should (equal (clj-parse) '(()))))
-
-  (with-temp-buffer
-    (insert "(1)")
-    (goto-char 1)
-    (should (equal (clj-parse) '((1))))))
-
-(ert-deftest clj-lex-next-test ()
-  (with-temp-buffer
-    (insert "()")
-    (goto-char 1)
-    (should (equal (clj-lex-next) '((type . :lparen) (pos . 1))))
-    (should (equal (clj-lex-next) '((type . :rparen) (pos . 2))))
-    (should (equal (clj-lex-next) '((type . :eof) (pos . 3)))))
-
-  (with-temp-buffer
-    (insert "123")
-    (goto-char 1)
-    (should (equal (clj-lex-next) '((type . :number)
-                                       (value . 123)
-                                       (form . "123")
-                                       (pos . 1)))))
-
-  (with-temp-buffer
-    (insert " \t  \n")
-    (goto-char 1)
-    (should (equal (clj-lex-next) '((type . :whitespace) (form . " \t  \n") (pos . 1))))))
-
-
-
 (provide 'clj-parse)
 ;;; clj-parse.el ends here
-123
