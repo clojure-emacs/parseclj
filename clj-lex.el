@@ -79,7 +79,7 @@
   (not (not (and char
                  (or (and (<= ?a char) (<= char ?z))
                      (and (<= ?A char) (<= char ?Z))
-                     (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?>)))))))
+                     (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/)))))))
 
 (defun clj-lex-symbol-rest? (char)
   (or (clj-lex-symbol-start? char)

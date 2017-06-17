@@ -47,6 +47,11 @@
     (should (equal (clj-parse) '((nil t nil hello-world)))))
 
   (with-temp-buffer
+    (insert "clojure.string/join")
+    (goto-char 1)
+    (should (equal (clj-parse) '(clojure.string/join))))
+
+  (with-temp-buffer
     (insert "((.9 abc (true) (hello)))")
     (goto-char 1)
     (should (equal (clj-parse) '(((0.9 abc (t) (hello)))))))
