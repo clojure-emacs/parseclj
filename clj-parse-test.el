@@ -79,7 +79,12 @@
   (with-temp-buffer
     (insert ":foo-bar")
     (goto-char 1)
-    (should (equal (clj-parse) '(:foo-bar)))))
+    (should (equal (clj-parse) '(:foo-bar))))
+
+  (with-temp-buffer
+    (insert "[123]")
+    (goto-char 1)
+    (should (equal (clj-parse) '([123])))))
 
 (provide 'clj-parse-test)
 

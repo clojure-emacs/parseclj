@@ -177,6 +177,14 @@
         (right-char)
         (clj-lex-token :rparen ")" pos))
 
+       ((equal char ?\[)
+        (right-char)
+        (clj-lex-token :lbracket "[" pos))
+
+       ((equal char ?\])
+        (right-char)
+        (clj-lex-token :rbracket "]" pos))
+
        ((clj-lex-at-number?)
         (clj-lex-number))
 

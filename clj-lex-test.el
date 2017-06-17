@@ -109,7 +109,14 @@
   (with-temp-buffer
     (insert ":::hello-world")
     (goto-char 1)
-    (should (equal (clj-lex-next) (clj-lex-token :lex-error ":::" 1 'error-type :invalid-keyword)))))
+    (should (equal (clj-lex-next) (clj-lex-token :lex-error ":::" 1 'error-type :invalid-keyword))))
+
+  (with-temp-buffer
+    (insert "[123]")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :lbracket "[" 1)))
+    (should (equal (clj-lex-next) (clj-lex-token :number "123" 2)))
+    (should (equal (clj-lex-next) (clj-lex-token :rbracket "]" 5)))))
 
 (ert-deftest clj-lex-test-at-number? ()
   (dolist (str '("123" ".9" "+1" "0" "-456"))

@@ -97,7 +97,8 @@
    (cl-case type
      (:whitespace :ws)
      (:number coll)
-     (:list (-butlast (cdr coll))))
+     (:list (-butlast (cdr coll)))
+     (:vector (apply #'vector (-butlast (cdr coll)))))
    stack))
 
 ;; TODO move this to clj-lex
@@ -105,15 +106,15 @@
   (and (listp token)
        (cdr (assq 'type token))))
 
-(defun clj-parse--reduce-list (stack reducN)
+(defun clj-parse--reduce-coll (stack open-token coll-type reducN)
   (let ((coll nil))
     (while (and stack
-                (not (eq (clj-parse--token-type (car stack)) :lparen)))
+                (not (eq (clj-parse--token-type (car stack)) open-token)))
       (push (pop stack) coll))
-    (if (eq (clj-parse--token-type (car stack)) :lparen)
+    (if (eq (clj-parse--token-type (car stack)) open-token)
         (progn
           (push (pop stack) coll)
-          (funcall reduceN stack :list coll))
+          (funcall reduceN stack coll-type coll))
       ;; Unwound the stack without finding a matching paren: return the original stack
       (reverse list))))
 
@@ -132,7 +133,9 @@
               (cons token stack)))
 
       (cl-case (clj-parse--token-type (car stack))
-        (:rparen (setf stack (clj-parse--reduce-list stack reduceN))))
+        (:rparen (setf stack (clj-parse--reduce-coll stack :lparen :list reduceN)))
+        (:rbracket (setf stack (clj-parse--reduce-coll stack :lbracket :vector reduceN))))
+
 
       (setq token (clj-lex-next)))
 
