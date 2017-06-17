@@ -5,4 +5,4 @@ before_install:
   - sudo apt-get install -qq emacs-snapshot
 
 script:
-  - bin/run-tests
+  - emacs -batch -l clj-parse-test-runner.el
