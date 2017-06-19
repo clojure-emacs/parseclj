@@ -155,7 +155,7 @@
 
       ;; Reduce based on top two items on the stack
       (if (not (clj-lex-token? (car stack))) ;; top is fully reduced
-          (cl-case (clj-lex-token-type (second stack))
+          (cl-case (clj-lex-token-type (cadr stack))
             (:discard (setf stack (funcall reduceN (cddr stack) :discard (-take 2 stack))))))
 
       (setq token (clj-lex-next)))
