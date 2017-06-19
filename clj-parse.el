@@ -107,11 +107,6 @@
                      (-partition 2 (-butlast (cdr coll))))))
      stack)))
 
-;; TODO move this to clj-lex
-(defun clj-lex-token-type (token)
-  (and (listp token)
-       (cdr (assq 'type token))))
-
 (defun clj-parse--reduce-coll (stack open-token coll-type reducN)
   (let ((coll nil))
     (while (and stack
