@@ -25,7 +25,7 @@
 (defun clj-lex-token (type form pos &rest args)
   `((type . ,type)
     (form . ,form)
-    (pos . , pos)
+    (pos  . ,pos)
     ,@(mapcar (lambda (pair)
                 (cons (car pair) (cadr pair)))
               (-partition 2 args))))
@@ -81,26 +81,34 @@
         (and (member char '(?- ?+ ?.))
              (clj-lex-digit? (char-after (1+ (point))))))))
 
-(defun clj-lex-symbol-start? (char)
+(defun clj-lex-symbol-start? (char &optional alpha-only)
   "Symbols begin with a non-numeric character and can contain
-   alphanumeric characters and . * + ! - _ ? $ % & = < >. If -, +
-   or . are the first character, the second character (if any)
-   must be non-numeric."
+alphanumeric characters and . * + ! - _ ? $ % & = < >. If -, + or
+. are the first character, the second character (if any) must be
+non-numeric.
+
+In some cases, like in tagged elements, symbols are required to
+start with alphabetic characters only. ALPHA-ONLY ensures this
+behavior."
   (not (not (and char
                  (or (and (<= ?a char) (<= char ?z))
                      (and (<= ?A char) (<= char ?Z))
-                     (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/)))))))
+                     (and (not alpha-only) (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/))))))))
 
 (defun clj-lex-symbol-rest? (char)
   (or (clj-lex-symbol-start? char)
       (clj-lex-digit? char)))
 
+(defun clj-lex-get-symbol-at-point (pos)
+  "Return the symbol at point."
+  (while (clj-lex-symbol-rest? (char-after (point)))
+    (right-char))
+  (buffer-substring-no-properties pos (point)))
+
 (defun clj-lex-symbol ()
   (let ((pos (point)))
     (right-char)
-    (while (clj-lex-symbol-rest? (char-after (point)))
-      (right-char))
-    (let ((sym (buffer-substring-no-properties pos (point))))
+    (let ((sym (clj-lex-get-symbol-at-point pos)))
       (cond
        ((equal sym "nil") (clj-lex-token :nil "nil" pos))
        ((equal sym "true") (clj-lex-token :true "true" pos))
@@ -162,10 +170,7 @@
     (when (equal (char-after (point)) ?:)
       (right-char))
     (if (clj-lex-symbol-start? (char-after (point)))
-        (progn
-          (while (clj-lex-symbol-rest? (char-after (point)))
-            (right-char))
-          (clj-lex-token :keyword (buffer-substring-no-properties pos (point)) pos))
+        (clj-lex-token :keyword (clj-lex-get-symbol-at-point pos) pos)
       (progn
         (right-char)
         (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword)))))
@@ -221,13 +226,21 @@
        ((equal char ?#)
         (right-char)
         (let ((char (char-after (point))))
-          (cl-case char
-            (?{
-             (right-char)
-             (clj-lex-token :set "#{" pos))
-            (?_
-             (right-char)
-             (clj-lex-token :discard "#_" pos)))))
+          (cond
+           ((equal char ?{)
+            (right-char)
+            (clj-lex-token :set "#{" pos))
+           ((equal char ?_)
+            (right-char)
+            (clj-lex-token :discard "#_" pos))
+           ((clj-lex-symbol-start? char t)
+            (right-char)
+            (clj-lex-token :tag (concat "#" (clj-lex-get-symbol-at-point (1+ pos))) pos))
+           (t
+            (while (not (or (clj-lex-at-whitespace?)
+                            (clj-lex-at-eof?)))
+              (right-char))
+            (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-hashtag-dispatcher)))))
 
        ":("))))
 
