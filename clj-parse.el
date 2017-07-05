@@ -67,7 +67,7 @@
 ;;
 ;; Note that this is kind of broken, we don't correctly detect if \u or \o forms
 ;; don't have the right forms.
-(defun clj-parse-string (s)
+(defun clj-parse--string (s)
   (replace-regexp-in-string
    "\\\\o[0-8]\\{3\\}"
    (lambda (x)
@@ -88,7 +88,7 @@
                                   (t (substring x 1))))
                               (substring s 1 -1)))))
 
-(defun clj-parse-character (c)
+(defun clj-parse--character (c)
   (let ((first-char (elt c 1)))
     (cond
      ((equal c "\\newline") ?\n)
@@ -167,6 +167,68 @@
 
 (defun clj-parse ()
   (clj-parse-reduce #'clj-parse--ast-reduce1 #'clj-parse--ast-reduceN))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; To Elisp
+
+(defun clj-parse--reduce-elisp-leaf (leaf)
+  (cl-case (clj-lex-token-type leaf)
+    (:number (string-to-number (alist-get 'form leaf)))
+    (:nil nil)
+    (:true t)
+    (:false nil)
+    (:symbol (intern (alist-get 'form leaf)))
+    (:keyword (intern (alist-get 'form leaf)))
+    (:string (clj-parse--string (alist-get 'form leaf)))
+    (:character (clj-parse--character (alist-get 'form leaf)))))
+
+(defun clj-parse--reduce-to-elisp (node)
+  (if (clj-parse--is-leaf? node)
+      (clj-parse--reduce-elisp-leaf node)
+    (let ((subnodes (-remove (lambda (token) (eq (clj-lex-token-type token) :discard)) (alist-get 'subnodes node))))
+      (cl-case (clj-lex-token-type node)
+        (:root (mapcar 'clj-parse--reduce-to-elisp subnodes))
+        (:list (mapcar 'clj-parse--reduce-to-elisp subnodes))
+        (:vector (apply #'vector (mapcar 'clj-parse--reduce-to-elisp subnodes)))
+        (:set (mapcar 'clj-parse--reduce-to-elisp subnodes))
+        (:map (mapcar (lambda (pair)
+                        (cons (clj-parse--reduce-to-elisp (car pair))
+                              (clj-parse--reduce-to-elisp (cadr pair))))
+                      (-partition 2 subnodes)))
+        ;; tagged literal
+        ))))
+
+(defun clj-parse-to-elisp ()
+  (clj-parse--reduce-to-elisp (clj-parse)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; To Clojure/EDN string
+
+(defun clj-parse--reduce-string-leaf (leaf)
+  (alist-get 'form leaf))
+
+(defun clj-parse--string-with-delimiters (nodes ld rd)
+  (s-concat ld
+            (s-join " " (mapcar 'clj-parse--reduce-to-string nodes))
+            rd))
+
+(defun clj-parse--reduce-to-string (node)
+  (if (clj-parse--is-leaf? node)
+      (clj-parse--reduce-string-leaf node)
+    (let ((subnodes (-remove (lambda (token) (eq (clj-lex-token-type token) :discard)) (alist-get 'subnodes node))))
+      (cl-case (clj-lex-token-type node)
+        (:root (clj-parse--string-with-delimiters subnodes "" ""))
+        (:list (clj-parse--string-with-delimiters subnodes "(" ")"))
+        (:vector (clj-parse--string-with-delimiters subnodes "[" "]"))
+        (:set (clj-parse--string-with-delimiters subnodes "#{" "}"))
+        (:map (clj-parse--string-with-delimiters subnodes "{" "}"))
+        ;; tagged literals
+        ))))
+
+(defun clj-parse-to-string ()
+  (clj-parse--reduce-to-string (clj-parse)))
 
 (provide 'clj-parse)
 
