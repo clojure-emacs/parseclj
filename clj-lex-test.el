@@ -64,6 +64,21 @@
     (should (equal (clj-lex-next) '((type . :symbol) (form . "hello-world") (pos . 1)))))
 
   (with-temp-buffer
+    (insert "-hello-world")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :symbol) (form . "-hello-world") (pos . 1)))))
+
+  (with-temp-buffer
+    (insert "#inst")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :tag) (form . "#inst") (pos . 1)))))
+
+  (with-temp-buffer
+    (insert "#qualified/tag")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :tag) (form . "#qualified/tag") (pos . 1)))))
+
+  (with-temp-buffer
     (insert "\\newline\\return\\space\\tab\\a\\b\\c")
     (goto-char 1)
     (should (equal (clj-lex-next) (clj-lex-token :character "\\newline" 1)))
@@ -100,6 +115,11 @@
     (insert ":hello-world")
     (goto-char 1)
     (should (equal (clj-lex-next) (clj-lex-token :keyword ":hello-world" 1))))
+
+  (with-temp-buffer
+    (insert ":hello/world")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :keyword ":hello/world" 1))))
 
   (with-temp-buffer
     (insert "::hello-world")
@@ -184,6 +204,7 @@
   (should (equal (clj-lex-symbol-start? ?a) t))
   (should (equal (clj-lex-symbol-start? ?A) t))
   (should (equal (clj-lex-symbol-start? ?.) t))
+  (should (equal (clj-lex-symbol-start? ?. t) nil))
   (should (equal (clj-lex-symbol-start? ?~) nil))
   (should (equal (clj-lex-symbol-start? ? ) nil)))
 
@@ -194,6 +215,29 @@
   (should (equal (clj-lex-symbol-rest? ?.) t))
   (should (equal (clj-lex-symbol-rest? ?~) nil))
   (should (equal (clj-lex-symbol-rest? ? ) nil)))
+
+(ert-deftest clj-lex-test-get-symbol-at-point ()
+  (with-temp-buffer
+    (insert "a-symbol")
+    (goto-char 1)
+    (should (equal (clj-lex-get-symbol-at-point 1) "a-symbol"))
+    (should (equal (point) 9))))
+
+(ert-deftest clj-lex-test-invalid-tag ()
+  (with-temp-buffer
+    (insert "#.not-a-tag")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :lex-error) (form . "#.not-a-tag") (pos . 1) (error-type . :invalid-hashtag-dispatcher)))))
+
+  (with-temp-buffer
+    (insert "#-not-a-tag")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :lex-error) (form . "#-not-a-tag") (pos . 1) (error-type . :invalid-hashtag-dispatcher)))))
+
+  (with-temp-buffer
+    (insert "#+not-a-tag")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :lex-error) (form . "#+not-a-tag") (pos . 1) (error-type . :invalid-hashtag-dispatcher))))))
 
 (ert-deftest clj-lex-test-string ()
   (with-temp-buffer
