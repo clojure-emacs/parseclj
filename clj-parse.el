@@ -99,14 +99,10 @@
      ((eq first-char ?o) (string-to-number (substring c 2) 8))
      (t first-char))))
 
-(defun clj-parse--next ()
-  (setq next (clj-lex-next))
-  (while (eq (clj-lex-token-type next) :whitespace)
-    (setq next (clj-parse--next)))
-  next)
-
 (defun clj-parse--ast-reduce1 (stack leaf)
-  (push leaf stack))
+  (if (eq (clj-lex-token-type leaf) :whitespace)
+      stack
+    (push leaf stack)))
 
 (defun clj-parse--ast-reduceN (stack node subnodes)
   (push
@@ -142,7 +138,7 @@
 (defun clj-parse-reduce (reduce1 reduceN)
   (let ((stack nil))
 
-    (while (not (eq (clj-lex-token-type (setq token (clj-parse--next))) :eof))
+    (while (not (eq (clj-lex-token-type (setq token (clj-lex-next))) :eof))
       (message "STACK: %S" stack)
       (message "TOKEN: %S\n" token)
 
