@@ -27,6 +27,8 @@
 ;; Before emacs 25.1 it's an ELPA package
 
 (require 'a)
+(require 's)
+(require 'dash)
 (require 'let-alist)
 (require 'cl-lib)
 (require 'clj-lex)
@@ -47,18 +49,12 @@
                                    :rbrace)
   "Tokens that represent closing of an AST branch.")
 
-(defun clj-parse--is-leaf? (el)
-  (member (clj-lex-token-type el) clj-parse--leaf-tokens))
-
-(defun clj-parse--is-node? (el)
-  (a-has-key el 'subnodes))
+(defun clj-parse--is-leaf? (node)
+  (member (a-get node ':node-type) clj-parse--leaf-tokens))
 
 (defun clj-parse--is-open-prefix? (el)
   (and (member (clj-lex-token-type el) '(:discard :tag))
-       (not (clj-parse--is-node? el))))
-
-(defun clj-parse--make-node (type subnodes &rest kvs)
-  (apply 'a-list 'type type 'subnodes subnodes kvs))
+       (clj-lex-token? el)))
 
 ;; The EDN spec is not clear about wether \u0123 and \o012 are supported in
 ;; strings. They are described as character literals, but not as string escape
@@ -99,20 +95,20 @@
      ((eq first-char ?o) (string-to-number (substring c 2) 8))
      (t first-char))))
 
-(defun clj-parse--ast-reduce1 (stack leaf)
-  (if (eq (clj-lex-token-type leaf) :whitespace)
-      stack
-    (push leaf stack)))
+(defun clj-parse--leaf-token-value (token)
+  (cl-case (clj-lex-token-type token)
+    (:number (string-to-number (alist-get 'form token)))
+    (:nil nil)
+    (:true t)
+    (:false nil)
+    (:symbol (intern (alist-get 'form token)))
+    (:keyword (intern (alist-get 'form token)))
+    (:string (clj-parse--string (alist-get 'form token)))
+    (:character (clj-parse--character (alist-get 'form token)))))
 
-(defun clj-parse--ast-reduceN (stack node subnodes)
-  (push
-   (cl-case (clj-lex-token-type node)
-     (:lparen (clj-parse--make-node :list subnodes))
-     (:lbracket (clj-parse--make-node :vector subnodes))
-     (:set (clj-parse--make-node :set subnodes))
-     (:lbrace (clj-parse--make-node :map subnodes))
-     (:discard (clj-parse--make-node :discard subnodes)))
-   stack))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Shift-Reduce Parser
 
 (defun clj-parse--find-opener (stack closer-token)
   (cl-case (clj-lex-token-type closer-token)
@@ -135,7 +131,7 @@
       ;; Syntax error
       (error "Syntax Error"))))
 
-(defun clj-parse-reduce (reduce1 reduceN)
+(defun clj-parse-reduce (reduce-leaf reduce-node)
   (let ((stack nil))
 
     (while (not (eq (clj-lex-token-type (setq token (clj-lex-next))) :eof))
@@ -145,76 +141,102 @@
       ;; Reduce based on the top item on the stack (collections)
       (let ((token-type (clj-lex-token-type token)))
         (cond
-         ((member token-type clj-parse--leaf-tokens) (setf stack (funcall reduce1 stack token)))
-         ((member token-type clj-parse--closer-tokens) (setf stack (clj-parse--reduce-coll stack token reduceN)))
+         ((member token-type clj-parse--leaf-tokens) (setf stack (funcall reduce-leaf stack token)))
+         ((member token-type clj-parse--closer-tokens) (setf stack (clj-parse--reduce-coll stack token reduce-node)))
          (t (push token stack))))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
       (seq-let [top lookup] stack
         (when (and (clj-parse--is-open-prefix? lookup)
-                   (or (clj-parse--is-node? top)
-                       (clj-parse--is-leaf? top))) ;; top is fully reduced
-            (setf stack (funcall reduceN (cddr stack) lookup (list top))))))
+                   (not (clj-lex-token? top))) ;; top is fully reduced
+            (setf stack (funcall reduce-node (cddr stack) lookup (list top))))))
 
     ;; reduce root
-    (let ((root (clj-parse--make-node :root stack)))
-      (message "RESULT: %S" root)
-      root)))
-
-(defun clj-parse ()
-  (clj-parse-reduce #'clj-parse--ast-reduce1 #'clj-parse--ast-reduceN))
+    (setf stack (funcall reduce-node stack '((type . :root) (pos . 0)) stack))
+    (message "RESULT: %S" stack)
+    stack))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; To Elisp
+;;; Reducer implementations
 
-(defun clj-parse--reduce-elisp-leaf (leaf)
-  (cl-case (clj-lex-token-type leaf)
-    (:number (string-to-number (alist-get 'form leaf)))
-    (:nil nil)
-    (:true t)
-    (:false nil)
-    (:symbol (intern (alist-get 'form leaf)))
-    (:keyword (intern (alist-get 'form leaf)))
-    (:string (clj-parse--string (alist-get 'form leaf)))
-    (:character (clj-parse--character (alist-get 'form leaf)))))
+(defun clj-parse--make-node (type position &rest kvs)
+  (apply 'a-list ':node-type type ':position position kvs))
 
-(defun clj-parse--reduce-to-elisp (node)
-  (if (clj-parse--is-leaf? node)
-      (clj-parse--reduce-elisp-leaf node)
-    (let ((subnodes (-remove (lambda (token) (eq (clj-lex-token-type token) :discard)) (alist-get 'subnodes node))))
-      (cl-case (clj-lex-token-type node)
-        (:root (mapcar 'clj-parse--reduce-to-elisp subnodes))
-        (:list (mapcar 'clj-parse--reduce-to-elisp subnodes))
-        (:vector (apply #'vector (mapcar 'clj-parse--reduce-to-elisp subnodes)))
-        (:set (mapcar 'clj-parse--reduce-to-elisp subnodes))
-        (:map (mapcar (lambda (pair)
-                        (cons (clj-parse--reduce-to-elisp (car pair))
-                              (clj-parse--reduce-to-elisp (cadr pair))))
-                      (-partition 2 subnodes)))
-        ;; tagged literal
-        ))))
+;; AST
 
-(defun clj-parse-to-elisp ()
-  (clj-parse--reduce-to-elisp (clj-parse)))
+(defun clj-parse--ast-reduce-leaf (stack token)
+  (if (eq (clj-lex-token-type token) :whitespace)
+      stack
+    (push
+     (clj-parse--make-node (clj-lex-token-type token) (a-get token 'pos)
+                           ':form (a-get token 'form)
+                           ':value (clj-parse--leaf-token-value token))
+     stack)))
+
+(defun clj-parse--ast-reduce-node (stack opener-token children)
+  (let* ((pos (a-get opener-token 'pos))
+         (type (cl-case (clj-lex-token-type opener-token)
+                 (:root :root)
+                 (:lparen :list)
+                 (:lbracket :vector)
+                 (:set :set)
+                 (:lbrace :map)
+                 (:discard :discard))))
+    (cl-case type
+      (:root (clj-parse--make-node :root 0 ':children children))
+      (:discard stack)
+      (t (push
+          (clj-parse--make-node type pos
+                                ':children children)
+          stack)))))
+
+(defun clj-parse-ast ()
+  (clj-parse-reduce #'clj-parse--ast-reduce-leaf #'clj-parse--ast-reduce-node))
+
+; Elisp
+
+(defun clj-parse--edn-reduce-leaf (stack token)
+  (if (eq (clj-lex-token-type token) :whitespace)
+      stack
+    (push (clj-parse--leaf-token-value token) stack)))
+
+(defun clj-parse--edn-reduce-node (stack opener-token children)
+  (let ((type (clj-lex-token-type opener-token)))
+    (if (member type '(:root :discard))
+        stack
+      (push
+       (cl-case type
+         (:lparen children)
+         (:lbracket (apply #'vector children))
+         (:set children)
+         (:lbrace (mapcar (lambda (pair)
+                         (cons (car pair) (cadr pair)))
+                       (-partition 2 children))))
+       stack))))
+
+(defun clj-parse-edn ()
+  (clj-parse-reduce #'clj-parse--edn-reduce-leaf #'clj-parse--edn-reduce-node))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; To Clojure/EDN string
+;; Printer implementations
+
+;; AST
 
 (defun clj-parse--reduce-string-leaf (leaf)
-  (alist-get 'form leaf))
+  (alist-get ':form leaf))
 
 (defun clj-parse--string-with-delimiters (nodes ld rd)
-  (s-concat ld
-            (s-join " " (mapcar 'clj-parse--reduce-to-string nodes))
-            rd))
+  (concat ld
+          (s-join " " (mapcar #'clj-parse-ast-print nodes))
+          rd))
 
-(defun clj-parse--reduce-to-string (node)
+(defun clj-parse-ast-print (node)
   (if (clj-parse--is-leaf? node)
       (clj-parse--reduce-string-leaf node)
-    (let ((subnodes (-remove (lambda (token) (eq (clj-lex-token-type token) :discard)) (alist-get 'subnodes node))))
-      (cl-case (clj-lex-token-type node)
+    (let ((subnodes (alist-get ':children node)))
+      (cl-case (a-get node ':node-type)
         (:root (clj-parse--string-with-delimiters subnodes "" ""))
         (:list (clj-parse--string-with-delimiters subnodes "(" ")"))
         (:vector (clj-parse--string-with-delimiters subnodes "[" "]"))
@@ -222,9 +244,6 @@
         (:map (clj-parse--string-with-delimiters subnodes "{" "}"))
         ;; tagged literals
         ))))
-
-(defun clj-parse-to-string ()
-  (clj-parse--reduce-to-string (clj-parse)))
 
 (provide 'clj-parse)
 
