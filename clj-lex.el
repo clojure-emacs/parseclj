@@ -155,7 +155,6 @@ behavior."
   (let ((pos (point)))
     (right-char)
     (while (not (or (equal (char-after (point)) ?\") (clj-lex-at-eof?)))
-      (message (buffer-substring-no-properties pos (point)))
       (if (equal (char-after (point)) ?\\)
           (right-char 2)
         (right-char)))
@@ -292,7 +291,8 @@ behavior."
               (right-char))
             (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-hashtag-dispatcher)))))
 
-       ":("))))
+       (t
+        (concat ":(" (char-to-string char)))))))
 
 (provide 'clj-lex)
 

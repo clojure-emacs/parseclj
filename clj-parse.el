@@ -130,14 +130,16 @@
         (let ((node (pop stack)))
           (funcall reduceN stack node coll))
       ;; Syntax error
-      (error "Syntax Error"))))
+      (progn
+        (message "STACK: %S , CLOSER: %S" stack closer-token)
+        (error "Syntax Error")))))
 
 (defun clj-parse-reduce (reduce-leaf reduce-node)
   (let ((stack nil))
 
     (while (not (eq (clj-lex-token-type (setq token (clj-lex-next))) :eof))
-      (message "STACK: %S" stack)
-      (message "TOKEN: %S\n" token)
+      ;; (message "STACK: %S" stack)
+      ;; (message "TOKEN: %S\n" token)
 
       ;; Reduce based on the top item on the stack (collections)
       (let ((token-type (clj-lex-token-type token)))
@@ -154,7 +156,7 @@
 
     ;; reduce root
     (setf stack (funcall reduce-node stack '((type . :root) (pos . 0)) stack))
-    (message "RESULT: %S" stack)
+    ;; (message "RESULT: %S" stack)
     stack))
 
 
