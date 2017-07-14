@@ -210,15 +210,23 @@
        (cl-case type
          (:lparen children)
          (:lbracket (apply #'vector children))
-         (:set children)
-         (:lbrace (mapcar (lambda (pair)
-                         (cons (car pair) (cadr pair)))
-                       (-partition 2 children))))
+         (:set (list 'edn-set children))
+         (:lbrace (let* ((kvs (seq-partition children 2))
+                         (hash-map (make-hash-table :test 'equal :size (length kvs))))
+                    (seq-do (lambda (pair)
+                              (puthash (car pair) (cadr pair) hash-map))
+                            kvs)
+                    hash-map)))
        stack))))
 
 (defun clj-parse-edn ()
   (clj-parse-reduce #'clj-parse--edn-reduce-leaf #'clj-parse--edn-reduce-node))
 
+(defun clj-parse-edn-str (s)
+  (with-temp-buffer
+    (insert s)
+    (goto-char 1)
+    (car (clj-parse-reduce #'clj-parse--edn-reduce-leaf #'clj-parse--edn-reduce-node))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Printer implementations

@@ -26,6 +26,15 @@
 (require 'ert)
 (require 'clj-parse)
 
+(defun clj-parse--equal (a b)
+  (cond
+   ((and (hash-table-p a) (hash-table-p b))
+    (a-equal a b))
+   ((and (consp a) (consp b))
+    (and (clj-parse--equal (car a) (car b))
+         (clj-parse--equal (cdr a) (cdr b))))
+   (t (equal a b))))
+
 (defun clj-parse--deftest-mode (mode test-name test-string expected)
   (let* ((parse-fn (intern (concat "clj-parse-" mode)))
          (test-name (intern (concat (symbol-name parse-fn) "-" (symbol-name test-name)))))
@@ -33,7 +42,7 @@
        (with-temp-buffer
          (insert ,test-string)
          (goto-char 1)
-         (should (equal (,parse-fn) ,expected))))))
+         (should (clj-parse--equal (,parse-fn) ,expected))))))
 
 (defmacro clj-parse-deftest (test-name test-string mode-vs-expected-alist)
   (declare (indent defun))
@@ -214,7 +223,7 @@
                                           (:value . 123)))))))))))
 
 (clj-parse-deftest map "{:count 123}"
-  (("edn" '(((:count . 123))))
+  (("edn" (list (a-hash-table :count 123)))
    ("ast" '((:node-type . :root)
             (:position . 0)
             (:children . (((:node-type . :map)
@@ -229,7 +238,7 @@
                                           (:value . 123)))))))))))
 
 (clj-parse-deftest set "#{:x}"
-  (("edn" '((:x)))
+  (("edn" '((edn-set (:x))))
    ("ast" '((:node-type . :root)
             (:position . 0)
             (:children . (((:node-type . :set)
