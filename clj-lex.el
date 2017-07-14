@@ -176,6 +176,13 @@ behavior."
         (right-char)
         (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword)))))
 
+(defun clj-lex-comment ()
+  (let ((pos (point)))
+    (goto-char (line-end-position))
+    (when (equal (char-after (point)) ?\n)
+      (right-char))
+    (clj-lex-token :comment (buffer-substring-no-properties pos (point)) pos)))
+
 (defun clj-lex-next ()
   (if (clj-lex-at-eof?)
       (clj-lex-token :eof nil (point))
@@ -223,6 +230,9 @@ behavior."
 
        ((equal char ?:)
         (clj-lex-keyword))
+
+       ((equal char ?\;)
+        (clj-lex-comment))
 
        ((equal char ?#)
         (right-char)

@@ -34,6 +34,7 @@
 (require 'clj-lex)
 
 (defvar clj-parse--leaf-tokens '(:whitespace
+                                 :comment
                                  :number
                                  :nil
                                  :true
@@ -197,7 +198,7 @@
 ; Elisp
 
 (defun clj-parse--edn-reduce-leaf (stack token)
-  (if (eq (clj-lex-token-type token) :whitespace)
+  (if (member (clj-lex-token-type token) (list :whitespace :comment))
       stack
     (push (clj-parse--leaf-token-value token) stack)))
 
