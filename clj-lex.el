@@ -91,9 +91,20 @@
     (when (eq (char-after (point)) ?M)
       (right-char))
 
-    (clj-lex-token :number
-                   (buffer-substring-no-properties pos (point))
-                   pos)))
+    (let ((char (char-after (point))))
+      (if (and char (or (and (<= ?a char) (<= char ?z))
+                        (and (<= ?A char) (<= char ?Z))
+                        (and (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?& ?= ?< ?> ?/)))))
+          (progn
+            (right-char)
+            (clj-lex-token :lex-error
+                           (buffer-substring-no-properties pos (point))
+                           pos
+                           'error-type :invalid-number-format))
+
+        (clj-lex-token :number
+                       (buffer-substring-no-properties pos (point))
+                       pos)))))
 
 
 (defun clj-lex-digit? (char)

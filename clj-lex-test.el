@@ -39,6 +39,18 @@
                                     (pos . 1)))))
 
   (with-temp-buffer
+    (insert "123e34M")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :number)
+                                    (form . "123e34M")
+                                    (pos . 1)))))
+
+  (with-temp-buffer
+    (insert "123x")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :lex-error "123x" 1 'error-type :invalid-number-format))))
+
+  (with-temp-buffer
     (insert " \t  \n")
     (goto-char 1)
     (should (equal (clj-lex-next) '((type . :whitespace) (form . " \t  \n") (pos . 1)))))
