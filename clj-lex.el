@@ -133,7 +133,8 @@ behavior."
 (defun clj-lex-symbol-rest? (char)
   (or (clj-lex-symbol-start? char)
       (clj-lex-digit? char)
-      (eq ?: char)))
+      (eq ?: char)
+      (eq ?# char)))
 
 (defun clj-lex-get-symbol-at-point (pos)
   "Return the symbol at point."

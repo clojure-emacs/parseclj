@@ -81,6 +81,11 @@
     (should (equal (clj-lex-next) '((type . :symbol) (form . "-hello-world") (pos . 1)))))
 
   (with-temp-buffer
+    (insert "foo#")
+    (goto-char 1)
+    (should (equal (clj-lex-next) '((type . :symbol) (form . "foo#") (pos . 1)))))
+
+  (with-temp-buffer
     (insert "#inst")
     (goto-char 1)
     (should (equal (clj-lex-next) '((type . :tag) (form . "#inst") (pos . 1)))))
