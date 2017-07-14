@@ -135,36 +135,36 @@
       (puthash (pop keys-and-values) (pop keys-and-values) m))
     m))
 
-;; (ert-deftest maps ()
-;;   :tags '(edn maps)
-;;   (should (hash-table-p (clj-parse-edn-str "{ }")))
-;;   (should (hash-table-p (clj-parse-edn-str "{}")))
-;;   (should (map-equal (make-seeded-hash-table :foo :bar :baz :qux)
-;;                      (clj-parse-edn-str "{ :foo :bar :baz :qux}")))
-;;   (should (map-equal (make-seeded-hash-table 1 "123" 'vector [1 2 3])
-;;                      (clj-parse-edn-str "{ 1 \"123\" vector [1 2 3]}")))
-;;   (should (map-equal (make-seeded-hash-table [1 2 3] "some numbers")
-;;                      (clj-parse-edn-str "{[1 2 3] \"some numbers\"}"))))
+(ert-deftest maps ()
+  :tags '(edn maps)
+  (should (hash-table-p (clj-parse-edn-str "{ }")))
+  (should (hash-table-p (clj-parse-edn-str "{}")))
+  (should (map-equal (make-seeded-hash-table :foo :bar :baz :qux)
+                     (clj-parse-edn-str "{ :foo :bar :baz :qux}")))
+  (should (map-equal (make-seeded-hash-table 1 "123" 'vector [1 2 3])
+                     (clj-parse-edn-str "{ 1 \"123\" vector [1 2 3]}")))
+  (should (map-equal (make-seeded-hash-table [1 2 3] "some numbers")
+                     (clj-parse-edn-str "{[1 2 3] \"some numbers\"}"))))
 
-;; (ert-deftest sets ()
-;;   :tags '(edn sets)
-;;   (should (edn-set-p (clj-parse-edn-str "#{}")))
-;;   (should (edn-set-p (clj-parse-edn-str "#{ }")))
-;;   (should (equal (edn-list-to-set '(1 2 3)) (clj-parse-edn-str "#{1 2 3}")))
-;;   (should (equal (edn-list-to-set '(1 [1 2 3] 3)) (clj-parse-edn-str "#{1 [1 2 3] 3}"))))
+(ert-deftest sets ()
+  :tags '(edn sets)
+  (should (edn-set-p (clj-parse-edn-str "#{}")))
+  (should (edn-set-p (clj-parse-edn-str "#{ }")))
+  (should (equal (edn-list-to-set '(1 2 3)) (clj-parse-edn-str "#{1 2 3}")))
+  (should (equal (edn-list-to-set '(1 [1 2 3] 3)) (clj-parse-edn-str "#{1 [1 2 3] 3}"))))
 
-;; (ert-deftest comment ()
-;;   :tags '(edn comments)
-;;   (should-not (clj-parse-edn-str ";nada"))
-;;   (should (equal 1 (clj-parse-edn-str ";; comment
-;; 1")))
-;;   (should (equal [1 2 3] (clj-parse-edn-str "[1 2 ;comment to eol
-;; 3]")))
-;;   (should (equal '[valid more items] (clj-parse-edn-str "[valid;touching trailing comment
-;;  more items]")))
-;;   (should (equal [valid vector more vector items] (clj-parse-edn-str "[valid vector
-;;  ;;comment in vector
-;;  more vector items]"))))
+(ert-deftest comment ()
+  :tags '(edn comments)
+  (should-not (clj-parse-edn-str ";nada"))
+  (should (equal 1 (clj-parse-edn-str ";; comment
+1")))
+  (should (equal [1 2 3] (clj-parse-edn-str "[1 2 ;comment to eol
+3]")))
+  (should (equal '[valid more items] (clj-parse-edn-str "[valid;touching trailing comment
+ more items]")))
+  (should (equal [valid vector more vector items] (clj-parse-edn-str "[valid vector
+ ;;comment in vector
+ more vector items]"))))
 
 ;; (defun test-val-passed-to-handler (val)
 ;;   (should (listp val))
@@ -181,15 +181,16 @@
 ;;   (should (= 1 (clj-parse-edn-str "#my/type (1 2)")))
 ;;   (should (= 2 (clj-parse-edn-str "#my/other-type {:foo :bar}"))))
 
-;; (ert-deftest roundtrip ()
-;;   :tags '(edn roundtrip)
-;;   (let ((data [1 2 3 :foo (4 5) qux "quux"]))
-;;     (should (equal data (clj-parse-edn-str (edn-print-string data))))
-;;     (should (map-equal (make-seeded-hash-table :foo :bar)
-;;                        (clj-parse-edn-str (edn-print-string (make-seeded-hash-table :foo :bar)))))
-;;     (should (equal (edn-list-to-set '(1 2 3 [3 1.11]))
-;;                    (clj-parse-edn-str (edn-print-string (edn-list-to-set '(1 2 3 [3 1.11]))))))
-;;     (should-error (clj-parse-edn-str "#myapp/Person {:first \"Fred\" :last \"Mertz\"}"))))
+(ert-deftest roundtrip ()
+  :tags '(edn roundtrip)
+  (let ((data [1 2 3 :foo (4 5) qux "quux"]))
+    (should (equal data (clj-parse-edn-str (edn-print-string data))))
+    (should (map-equal (make-seeded-hash-table :foo :bar)
+                       (clj-parse-edn-str (edn-print-string (make-seeded-hash-table :foo :bar)))))
+    (should (equal (edn-list-to-set '(1 2 3 [3 1.11]))
+                   (clj-parse-edn-str (edn-print-string (edn-list-to-set '(1 2 3 [3 1.11]))))))
+    ;;(should-error (clj-parse-edn-str "#myapp/Person {:first \"Fred\" :last \"Mertz\"}"))
+    ))
 
 ;; (ert-deftest inst ()
 ;;   :tags '(edn inst)

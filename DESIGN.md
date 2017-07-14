@@ -29,6 +29,7 @@ The data structures available in Emacs are less rich than those used by Clojure.
 - Clojure has `nil` and `false`, Emacs only has `nil`.
 - Emacs has no notion of sets
 - Emacs has no date/timestamp type
+  - there is a `time-date.el` which has functions for working with day/time represented as cons cells.
 - Emacs has no "character" type (characters are represented as numbers)
 - Emacs does not support custom records/types (there is a Common Lisp inspired object system, but it implements types on top of regular lists and vectors).
 - Emacs does not support adding metadata to values
@@ -237,7 +238,9 @@ See also the section at the top regarding differences between Clojure's data typ
 
 These are the choices that the edn.el library has made:
 
-- represent sets as `'(edn-set (... set values ...))`
+- represent sets, inst and uuid values as `cl-defstruct` objects
+  - `'(edn-set (... set values ...))`
+  - `'(edn-inst high low)` see `time-date.el`
 - parse maps as hash tables
 - represent characters as integers, *but* parse `\newline` `\return` `\space` and `\tab` as the symbols `'newline` `'return` etc.
 - parse `true` as `t`, `nil` and `false` as `nil`.
