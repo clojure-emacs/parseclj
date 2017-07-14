@@ -59,14 +59,38 @@
                    (buffer-substring-no-properties pos (point))
                    pos)))
 
+(defun clj-lex-skip-digits ()
+  (while (and (char-after (point))
+              (<= ?0 (char-after (point)))
+              (<= (char-after (point)) ?9))
+    (right-char)))
+
+(defun clj-lex-skip-number ()
+  ;; [\+\-]?\d+\.\d+
+  (when (member (char-after (point)) '(?+ ?-))
+    (right-char))
+
+  (clj-lex-skip-digits)
+
+  (when (eq (char-after (point)) ?.)
+    (right-char))
+
+  (clj-lex-skip-digits))
+
 (defun clj-lex-number ()
   (let ((pos (point)))
-    (while (and (char-after (point))
-                (or (and (<= ?0 (char-after (point))) (<= (char-after (point)) ?9))
-                    (eq (char-after (point)) ?.)
-                    (eq (char-after (point)) ?M)
-                    (eq (char-after (point)) ?r)))
+    (clj-lex-skip-number)
+
+    ;; 10110r2 or 4.3e+22
+    (when (member (char-after (point)) '(?E ?e ?r))
       (right-char))
+
+    (clj-lex-skip-number)
+
+    ;; trailing M
+    (when (eq (char-after (point)) ?M)
+      (right-char))
+
     (clj-lex-token :number
                    (buffer-substring-no-properties pos (point))
                    pos)))

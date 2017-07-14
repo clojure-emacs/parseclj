@@ -231,6 +231,21 @@ The EDN parser functions will take an optional tag handler function. This functi
 
 When parsing code to an AST the situation is different, here tags simply become part of the AST, without caring about their semantics.
 
+## Representing EDN as Emacs Lisp values
+
+See also the section at the top regarding differences between Clojure's data types vs those available in Emacs Lisp.
+
+These are the choices that the edn.el library has made:
+
+- represent sets as `'(edn-set (... set values ...))`
+- parse maps as hash tables
+- represent characters as integers, *but* parse `\newline` `\return` `\space` and `\tab` as the symbols `'newline` `'return` etc.
+- parse `true` as `t`, `nil` and `false` as `nil`.
+
+### Differences with EDN.el
+
+At the moment the `clj-parse-edn-*` copy the parsing behavior of edn.el, *except* that the character literals `\newline`, `\return`, `\space`, and `\tab` are parsed to their character code (10, 13, 32, and 9 respectively), instead of to symbols.
+
 ## AST
 
 An AST (abstract syntax tree) is a tree structure made up of nodes. A node looks like this
