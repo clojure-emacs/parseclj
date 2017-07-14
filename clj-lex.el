@@ -168,13 +168,17 @@ behavior."
 (defun clj-lex-keyword ()
   (let ((pos (point)))
     (right-char)
-    (when (equal (char-after (point)) ?:)
+    (when (equal (char-after (point)) ?:) ;; same-namespace keyword
       (right-char))
-    (if (clj-lex-symbol-start? (char-after (point)))
-        (clj-lex-token :keyword (clj-lex-get-symbol-at-point pos) pos)
+    (if (equal (char-after (point)) ?:) ;; three colons in a row => lex-error
+        (progn
+          (right-char)
+          (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword))
       (progn
-        (right-char)
-        (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword)))))
+        (while (or (clj-lex-symbol-rest? (char-after (point)))
+                   (equal (char-after (point)) ?#))
+          (right-char))
+        (clj-lex-token :keyword (buffer-substring-no-properties pos (point)) pos)))))
 
 (defun clj-lex-comment ()
   (let ((pos (point)))

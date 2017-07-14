@@ -60,24 +60,24 @@
   (should (equal [a d] (clj-parse-edn-str "[a #_ ;we are discarding what comes next
  c d]"))))
 
-;; (ert-deftest string ()
-;;   :tags '(edn string)
-;;   (should (equal "this is a string" (clj-parse-edn-str "\"this is a string\"")))
-;;   (should (equal "this has an escaped \"quote in it"
-;;                  (clj-parse-edn-str "\"this has an escaped \\\"quote in it\"")))
-;;   (should (equal "foo\tbar" (clj-parse-edn-str "\"foo\\tbar\"")))
-;;   (should (equal "foo\nbar" (clj-parse-edn-str "\"foo\\nbar\"")))
-;;   (should (equal "this is a string \\ that has an escaped backslash"
-;;                  (clj-parse-edn-str "\"this is a string \\\\ that has an escaped backslash\"")))
-;;   (should (equal "[" (clj-parse-edn-str "\"[\""))))
+(ert-deftest string ()
+  :tags '(edn string)
+  (should (equal "this is a string" (clj-parse-edn-str "\"this is a string\"")))
+  (should (equal "this has an escaped \"quote in it"
+                 (clj-parse-edn-str "\"this has an escaped \\\"quote in it\"")))
+  (should (equal "foo\tbar" (clj-parse-edn-str "\"foo\\tbar\"")))
+  (should (equal "foo\nbar" (clj-parse-edn-str "\"foo\\nbar\"")))
+  (should (equal "this is a string \\ that has an escaped backslash"
+                 (clj-parse-edn-str "\"this is a string \\\\ that has an escaped backslash\"")))
+  (should (equal "[" (clj-parse-edn-str "\"[\""))))
 
-;; (ert-deftest keywords ()
-;;   :tags '(edn keywords)
-;;   (should (equal :namespace\.of\.some\.length/keyword-name
-;;                  (clj-parse-edn-str ":namespace.of.some.length/keyword-name")))
-;;   (should (equal :\#/\# (clj-parse-edn-str ":#/#")))
-;;   (should (equal :\#/:a (clj-parse-edn-str ":#/:a")))
-;;   (should (equal :\#foo (clj-parse-edn-str ":#foo"))))
+(ert-deftest keywords ()
+  :tags '(edn keywords)
+  (should (equal :namespace\.of\.some\.length/keyword-name
+                 (clj-parse-edn-str ":namespace.of.some.length/keyword-name")))
+  (should (equal :\#/\# (clj-parse-edn-str ":#/#")))
+  (should (equal :\#/:a (clj-parse-edn-str ":#/:a")))
+  (should (equal :\#foo (clj-parse-edn-str ":#foo"))))
 
 ;; (ert-deftest integers ()
 ;;   :tags '(edn integers)
