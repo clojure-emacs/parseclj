@@ -29,6 +29,7 @@ The data structures available in Emacs are less rich than those used by Clojure.
 - Clojure has `nil` and `false`, Emacs only has `nil`.
 - Emacs has no notion of sets
 - Emacs has no date/timestamp type
+- Emacs has no "character" type (characters are represented as numbers)
 - Emacs does not support custom records/types (there is a Common Lisp inspired object system, but it implements types on top of regular lists and vectors).
 - Emacs does not support adding metadata to values
 
