@@ -267,6 +267,17 @@
     (goto-char 1)
     (should (equal (clj-lex-string) (clj-lex-token :string "\"abc\\\"\"" 1)))))
 
+(ert-deftest clj-lex-test-tag ()
+  (with-temp-buffer
+    (insert "#inst")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :tag "#inst" 1))))
+
+  (with-temp-buffer
+    (insert "#foo/bar")
+    (goto-char 1)
+    (should (equal (clj-lex-next) (clj-lex-token :tag "#foo/bar" 1)))))
+
 (provide 'clj-lex-test)
 
 ;;; clj-lex-test.el ends here

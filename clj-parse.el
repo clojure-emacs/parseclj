@@ -107,7 +107,6 @@
     (:string (clj-parse--string (alist-get 'form token)))
     (:character (clj-parse--character (alist-get 'form token)))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Shift-Reduce Parser
 
@@ -155,7 +154,7 @@
             (setf stack (funcall reduce-node (cddr stack) lookup (list top))))))
 
     ;; reduce root
-    (setf stack (funcall reduce-node stack '((type . :root) (pos . 0)) stack))
+    (setf stack (funcall reduce-node stack '((type . :root) (pos . 1)) stack))
     ;; (message "RESULT: %S" stack)
     stack))
 
@@ -204,31 +203,49 @@
       stack
     (push (clj-parse--leaf-token-value token) stack)))
 
-(defun clj-parse--edn-reduce-node (stack opener-token children)
-  (let ((type (clj-lex-token-type opener-token)))
-    (if (member type '(:root :discard))
-        stack
-      (push
-       (cl-case type
-         (:lparen children)
-         (:lbracket (apply #'vector children))
-         (:set (list 'edn-set children))
-         (:lbrace (let* ((kvs (seq-partition children 2))
-                         (hash-map (make-hash-table :test 'equal :size (length kvs))))
-                    (seq-do (lambda (pair)
-                              (puthash (car pair) (cadr pair) hash-map))
-                            kvs)
-                    hash-map)))
-       stack))))
+(defun clj-parse--edn-reduce-node (tag-readers)
+  (lambda (stack opener-token children)
+    (let ((token-type (clj-lex-token-type opener-token)))
+      (if (member token-type '(:root :discard))
+          stack
+        (push
+         (cl-case token-type
+           (:lparen children)
+           (:lbracket (apply #'vector children))
+           (:set (list 'edn-set children))
+           (:lbrace (let* ((kvs (seq-partition children 2))
+                           (hash-map (make-hash-table :test 'equal :size (length kvs))))
+                      (seq-do (lambda (pair)
+                                (puthash (car pair) (cadr pair) hash-map))
+                              kvs)
+                      hash-map))
+           (:tag (let* ((tag (intern (substring (a-get opener-token 'form) 1)))
+                        (reader (a-get tag-readers tag :missing)))
+                   (when (eq :missing reader)
+                     (user-error "No reader for tag #%S in %S" tag (a-keys tag-readers)))
+                   (funcall reader (car children)))))
+         stack)))))
 
-(defun clj-parse-edn ()
-  (clj-parse-reduce #'clj-parse--edn-reduce-leaf #'clj-parse--edn-reduce-node))
+(defvar clj-edn-default-tag-readers
+  (a-list 'inst (lambda (s)
+                  (list* 'edn-inst (date-to-time s)))
+          'uuid (lambda (s)
+                  (list 'edn-uuid s)))
+  "Default reader functions for handling tagged literals in EDN.
+These are the ones defined in the EDN spec, #inst and #uuid. It
+is not recommended you change this variable, as this globally
+changes the behavior of the EDN reader. Instead pass your own
+handlers as an optional argument to the reader functions.")
 
-(defun clj-parse-edn-str (s)
+(defun clj-parse-edn (&optional tag-readers)
+  (clj-parse-reduce #'clj-parse--edn-reduce-leaf
+                    (clj-parse--edn-reduce-node (a-merge clj-edn-default-tag-readers tag-readers))))
+
+(defun clj-parse-edn-str (s &optional tag-readers)
   (with-temp-buffer
     (insert s)
     (goto-char 1)
-    (car (clj-parse-reduce #'clj-parse--edn-reduce-leaf #'clj-parse--edn-reduce-node))))
+    (car (clj-parse-edn tag-readers))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Printer implementations
