@@ -17,6 +17,7 @@
 (package-install 'package-lint)
 (package-install 'a)
 (package-install 'dash)
+(package-install 'edn) ;; required for the edn test suite
 
 (setq clj-parse-load-files '("clj-parse.el"
                              "clj-lex.el"

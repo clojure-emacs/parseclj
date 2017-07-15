@@ -24,6 +24,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'edn)
 
 (ert-deftest whitespace ()
   (should (null (clj-parse-edn-str "")))
