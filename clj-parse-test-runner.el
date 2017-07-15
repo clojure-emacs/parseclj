@@ -4,7 +4,7 @@
       '(("gnu" . "https://elpa.gnu.org/packages/")
         ;;("melpa" . "https://melpa.org/packages/")
         ("melpa-stable" . "https://stable.melpa.org/packages/")
-        ))
+        ("plexus-elpa" . "https://plexus.github.io/elpa/")))
 
 
 (package-initialize)
@@ -15,14 +15,19 @@
   (package-install 'let-alist))
 
 (package-install 'package-lint)
+(pacakge-install 'a)
 (package-install 'dash)
 
-(let ((files '("clj-parse.el" "clj-lex.el" "clj-parse-test.el" "clj-lex-test.el"))
-      (pwd (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pwd"))))
+(setq clj-parse-load-files '("clj-parse.el"
+                             "clj-lex.el"
+                             "tests/clj-parse-test.el"
+                             "tests/clj-lex-test.el"))
+
+(let ((pwd (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pwd"))))
 
   (add-to-list 'load-path pwd)
 
-  (dolist (file files)
+  (dolist (file clj-parse-load-files)
     (load (concat pwd "/" file)))
 
   (if (getenv "CLJ_PARSE_LINT")

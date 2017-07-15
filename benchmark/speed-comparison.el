@@ -1,4 +1,9 @@
-(with-current-buffer (find-file-noselect "/home/arne/tmp/edn2.list")
+;; takes a file containing edn file names, one per line
+;;
+;;    locate *.edn > edn.list
+;;
+;; results end up as edn in *edn-parse-time-results*
+(with-current-buffer (find-file-noselect "edn.list")
   (goto-char 1)
   (while (and (< (point) (point-max)))
     (end-of-line)

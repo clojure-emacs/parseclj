@@ -1,7 +1,6 @@
 language: generic
 dist: trusty
 env:
-  - VERSION=24.3.1 EMACS=emacs PACKAGE=emacs24
   - VERSION=25.2.2 EMACS=emacs-25.2 PACKAGE=emacs25
   - VERSION=25.2.2 EMACS=emacs-25.2 PACKAGE=emacs25 CLJ_PARSE_LINT=true
 
