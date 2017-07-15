@@ -44,14 +44,14 @@ handlers as an optional argument to the reader functions.")
 (defun clj-edn-reduce-leaf (stack token)
   (if (member (clj-lex-token-type token) (list :whitespace :comment))
       stack
-    (push (clj-parse--leaf-token-value token) stack)))
+    (cons (clj-parse--leaf-token-value token) stack)))
 
 (defun clj-edn-reduce-node (tag-readers)
   (lambda (stack opener-token children)
     (let ((token-type (clj-lex-token-type opener-token)))
       (if (member token-type '(:root :discard))
           stack
-        (push
+        (cons
          (cl-case token-type
            (:lparen children)
            (:lbracket (apply #'vector children))

@@ -36,7 +36,7 @@
 (defun clj-ast--reduce-leaf (stack token)
   (if (eq (clj-lex-token-type token) :whitespace)
       stack
-    (push
+    (cons
      (clj-parse--make-node (clj-lex-token-type token) (a-get token 'pos)
                            ':form (a-get token 'form)
                            ':value (clj-parse--leaf-token-value token))
@@ -54,7 +54,7 @@
     (cl-case type
       (:root (clj-parse--make-node :root 0 ':children children))
       (:discard stack)
-      (t (push
+      (t (cons
           (clj-parse--make-node type pos
                                 ':children children)
           stack)))))
@@ -78,7 +78,7 @@
         (:vector (clj-parse--string-with-delimiters subnodes "[" "]"))
         (:set (clj-parse--string-with-delimiters subnodes "#{" "}"))
         (:map (clj-parse--string-with-delimiters subnodes "{" "}"))
-        ;; tagged literals
+        (:tag )
         ))))
 
 (provide 'clj-ast)
