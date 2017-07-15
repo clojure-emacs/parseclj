@@ -14,7 +14,7 @@
       ;;(message fn)
       (with-current-buffer buff
         (let ((start (time-to-seconds (current-time))))
-          (clj-parse-edn)
+          (clj-edn-read)
           (setq clj-time (+ clj-time (- (time-to-seconds (current-time)) start))))
         (goto-char 1)
         (let ((start (time-to-seconds (current-time))))

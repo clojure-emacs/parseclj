@@ -21,6 +21,8 @@
 
 (setq clj-parse-load-files '("clj-parse.el"
                              "clj-lex.el"
+                             "clj-edn.el"
+                             "clj-ast.el"
                              "tests/clj-parse-test.el"
                              "tests/clj-lex-test.el"
                              "tests/edn-el-test-suite.el"))
