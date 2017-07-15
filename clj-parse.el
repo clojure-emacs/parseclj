@@ -4,7 +4,7 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((dash "2.12.0") (emacs "25") (a "0.1.0alpha1"))
+;; Package-Requires: ((dash "2.12.0") (emacs "25") (a "0.1.0alpha2"))
 ;; Version: 0.1.0
 
 ;; This file is not part of GNU Emacs.
@@ -230,7 +230,7 @@
 
 (defvar clj-edn-default-tag-readers
   (a-list 'inst (lambda (s)
-                  (list* 'edn-inst (date-to-time s)))
+                  (cl-list* 'edn-inst (date-to-time s)))
           'uuid (lambda (s)
                   (list 'edn-uuid s)))
   "Default reader functions for handling tagged literals in EDN.

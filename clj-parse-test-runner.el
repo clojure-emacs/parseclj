@@ -34,7 +34,7 @@
 
   (if (getenv "CLJ_PARSE_LINT")
       (let ((success t))
-        (dolist (file files)
+        (dolist (file clj-parse-load-files)
           (with-temp-buffer
             (insert-file-contents file t)
             (emacs-lisp-mode)
