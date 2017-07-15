@@ -15,7 +15,7 @@
   (package-install 'let-alist))
 
 (package-install 'package-lint)
-(pacakge-install 'a)
+(package-install 'a)
 (package-install 'dash)
 
 (setq clj-parse-load-files '("clj-parse.el"
