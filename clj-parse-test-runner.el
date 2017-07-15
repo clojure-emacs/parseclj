@@ -2,7 +2,7 @@
 
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
-        ;;("melpa" . "https://melpa.org/packages/")
+        ("melpa" . "https://melpa.org/packages/")
         ("melpa-stable" . "https://stable.melpa.org/packages/")
         ("plexus-elpa" . "https://plexus.github.io/elpa/")))
 
@@ -21,7 +21,8 @@
 (setq clj-parse-load-files '("clj-parse.el"
                              "clj-lex.el"
                              "tests/clj-parse-test.el"
-                             "tests/clj-lex-test.el"))
+                             "tests/clj-lex-test.el"
+                             "tests/edn-el-test-suite.el"))
 
 (let ((pwd (replace-regexp-in-string "\n\\'" "" (shell-command-to-string "pwd"))))
 

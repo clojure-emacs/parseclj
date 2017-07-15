@@ -4,19 +4,25 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((let-alist "1.0.5") (dash "2.12.0"))
+;; Package-Requires: ((dash "2.12.0") (emacs "25") (a "0.1.0alpha1"))
 ;; Version: 0.1.0
 
-;; This program is free software; you can redistribute it and/or modify it under
-;; the terms of the Mozilla Public License Version 2.0
+;; This file is not part of GNU Emacs.
 
-;; This program is distributed in the hope that it will be useful, but WITHOUT
-;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-;; FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-;; details.
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
 
-;; You should have received a copy of the Mozilla Public License along with this
-;; program. If not, see <https://www.mozilla.org/media/MPL/2.0/index.txt>.
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
 
@@ -24,12 +30,8 @@
 
 ;;; Code:
 
-;; Before emacs 25.1 it's an ELPA package
-
 (require 'a)
-(require 's)
 (require 'dash)
-(require 'let-alist)
 (require 'cl-lib)
 (require 'clj-lex)
 
@@ -257,7 +259,7 @@ handlers as an optional argument to the reader functions.")
 
 (defun clj-parse--string-with-delimiters (nodes ld rd)
   (concat ld
-          (s-join " " (mapcar #'clj-parse-ast-print nodes))
+          (mapconcat #'clj-parse-ast-print nodes " ")
           rd))
 
 (defun clj-parse-ast-print (node)
