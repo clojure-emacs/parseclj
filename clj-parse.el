@@ -4,7 +4,7 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((dash "2.12.0") (emacs "25") (a "0.1.0alpha2"))
+;; Package-Requires: ((emacs "25") (a "0.1.0alpha3"))
 ;; Version: 0.1.0
 
 ;; This file is not part of GNU Emacs.
@@ -30,9 +30,9 @@
 
 ;;; Code:
 
-(require 'a)
-(require 'dash)
 (require 'cl-lib)
+(require 'a)
+
 (require 'clj-lex)
 (require 'clj-edn)
 (require 'clj-ast)
@@ -119,7 +119,7 @@
     (:rparen :lparen)
     (:rbracket :lbracket)
     (:rbrace (clj-lex-token-type
-              (-find (lambda (token) (member (clj-lex-token-type token) '(:lbrace :set))) stack)))))
+              (seq-find (lambda (token) (member (clj-lex-token-type token) '(:lbrace :set))) stack)))))
 
 (defun clj-parse--reduce-coll (stack closer-token reduceN)
   "Reduce collection based on the top of the stack"
