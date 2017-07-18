@@ -1,4 +1,4 @@
-;;; edn-el-test-suite.el --- Tests from edn.el
+;;; edn-el-parity.el --- Tests from edn.el
 
 ;; Author: Lars Andersen <expez@expez.com>, Arne Brasseur <arne@arnebrasseur.net>
 
@@ -21,10 +21,17 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
+;;; Commentary:
+
+;; These tests are copied verbatim from the edn.el source, and adapted to use
+;; our API. This way we assure that clj-parse can act as a drop-in replacement
+;; for edn.el.
+
 ;;; Code:
 
+(require 'clj-parse)
 (require 'ert)
-(require 'edn)
+(eval-when-compile (require 'subr-x)) ;; for things like hash-table-keys
 
 (ert-deftest whitespace ()
   (should (null (clj-edn-read-str "")))
@@ -34,10 +41,8 @@
   (should (null (clj-edn-read-str "		")))
   (should (null (clj-edn-read-str ",")))
   (should (null (clj-edn-read-str ",,,,")))
-  (should (null (clj-edn-read-str "	  , ,
-")))
-  (should (null (clj-edn-read-str"
-  ,, 	")))
+  (should (null (clj-edn-read-str "	  , ,\n")))
+  (should (null (clj-edn-read-str "\n ,, 	")))
   (should (equal [a b c d] (clj-edn-read-str "[a ,,,,,, b,,,,,c ,d]"))))
 
 (ert-deftest symbols ()
@@ -81,7 +86,7 @@
   (should (equal '[1 2 3 4] (clj-edn-read-str "[1 2 #_[4 5 6] 3 4]")))
   (should (map-equal (make-seeded-hash-table :foo :bar)
                      (clj-edn-read-str "{:foo #_elided :bar}")))
-  (should (equal (edn-list-to-set '(1 2 3 4))
+  (should (equal '(edn-set (1 2 3 4))
                  (clj-edn-read-str "#{1 2 #_[1 2 3] 3 #_ (1 2) 4}")))
   (should (equal [a d] (clj-edn-read-str "[a #_ ;we are discarding what comes next
  c d]"))))
@@ -174,10 +179,10 @@
 
 (ert-deftest sets ()
   :tags '(edn sets)
-  (should (edn-set-p (clj-edn-read-str "#{}")))
-  (should (edn-set-p (clj-edn-read-str "#{ }")))
-  (should (equal (edn-list-to-set '(1 2 3)) (clj-edn-read-str "#{1 2 3}")))
-  (should (equal (edn-list-to-set '(1 [1 2 3] 3)) (clj-edn-read-str "#{1 [1 2 3] 3}"))))
+  (should (eq 'edn-set (car (clj-edn-read-str "#{}"))))
+  (should (eq 'edn-set (car (clj-edn-read-str "#{ }"))))
+  (should (equal '(edn-set (1 2 3)) (clj-edn-read-str "#{1 2 3}")))
+  (should (equal '(edn-set (1 [1 2 3] 3)) (clj-edn-read-str "#{1 [1 2 3] 3}"))))
 
 (ert-deftest comment ()
   :tags '(edn comments)
@@ -212,11 +217,11 @@
 (ert-deftest roundtrip ()
   :tags '(edn roundtrip)
   (let ((data [1 2 3 :foo (4 5) qux "quux"]))
-    (should (equal data (clj-edn-read-str (edn-print-string data))))
+    (should (equal data (clj-edn-read-str (clj-edn-print-str data))))
     (should (map-equal (make-seeded-hash-table :foo :bar)
-                       (clj-edn-read-str (edn-print-string (make-seeded-hash-table :foo :bar)))))
-    (should (equal (edn-list-to-set '(1 2 3 [3 1.11]))
-                   (clj-edn-read-str (edn-print-string (edn-list-to-set '(1 2 3 [3 1.11]))))))
+                       (clj-edn-read-str (clj-edn-print-str (make-seeded-hash-table :foo :bar)))))
+    (should (equal '(edn-set (1 2 3 [3 1.11]))
+                   (clj-edn-read-str (clj-edn-print-str '(edn-set (1 2 3 [3 1.11]))))))
     (should-error (clj-edn-read-str "#myapp/Person {:first \"Fred\" :last \"Mertz\"}"))))
 
 (ert-deftest inst ()
@@ -224,14 +229,14 @@
   (let* ((inst-str "#inst \"1985-04-12T23:20:50.52Z\"")
          (inst (clj-edn-read-str inst-str))
          (time (date-to-time "1985-04-12T23:20:50.52Z")))
-    (should (edn-inst-p inst))
-    (should (equal time (edn-inst-to-time inst)))))
+    (should (eq 'edn-inst (car inst)))
+    (should (equal time (cdr inst)))))
 
 (ert-deftest uuid ()
   :tags '(edn uuid)
   (let* ((str "f81d4fae-7dec-11d0-a765-00a0c91e6bf6")
          (uuid (clj-edn-read-str (concat "#uuid \"" str "\""))))
-    (should (edn-uuid-p uuid))))
+    (should (eq 'edn-uuid (car uuid)))))
 
 ;; (ert-deftest invalid-edn ()
 ;;   (should-error (clj-edn-read-str "///"))
@@ -278,4 +283,4 @@
 ;;   (should-error (clj-edn-read-str "[}"))
 ;;   (should-error (clj-edn-read-str "@cat")))
 
-;;; edn-el-test-suite.el ends here
+;;; edn-el-parity-test.el ends here

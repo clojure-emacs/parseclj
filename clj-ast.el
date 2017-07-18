@@ -44,42 +44,65 @@
 
 (defun clj-ast--reduce-node (stack opener-token children)
   (let* ((pos (a-get opener-token 'pos))
-         (type (cl-case (clj-lex-token-type opener-token)
-                 (:root :root)
+         (type (clj-lex-token-type opener-token))
+         (type (cl-case type
                  (:lparen :list)
                  (:lbracket :vector)
-                 (:set :set)
                  (:lbrace :map)
-                 (:discard :discard))))
+                 (t type))))
     (cl-case type
-      (:root (clj-parse--make-node :root 0 ':children children))
+      (:root (clj-parse--make-node :root 0 :children children))
       (:discard stack)
+      (:tag (clj-parse--make-node :tag
+                                  pos
+                                  :tag (intern (substring (a-get opener-token 'form) 1))
+                                  :children children))
       (t (cons
-          (clj-parse--make-node type pos
-                                ':children children)
+          (clj-parse--make-node type pos :children children)
           stack)))))
 
 (defun clj-ast-parse ()
+  "Parse Clojure code in buffer to AST.
+
+Parses code in the current buffer, starting from the current
+position of (point)."
   (clj-parse-reduce #'clj-ast--reduce-leaf #'clj-ast--reduce-node))
+
+(defun clj-ast-parse-str (s)
+  "Parse Clojure code in string S to AST."
+  (with-temp-buffer
+    (insert s)
+    (goto-char 1)
+    (clj-ast-parse)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Unparser
 
-(defun clj-parse--string-with-delimiters (nodes ld rd)
-  (concat ld (mapconcat #'clj-ast-unparse nodes " ") rd))
+(defun clj-ast-unparse-collection (nodes ld rd)
+  (insert ld)
+  (when-let (node (car nodes))
+    (clj-ast-unparse node))
+  (seq-doseq (node (cdr nodes))
+    (insert " ")
+    (clj-ast-unparse node))
+  (insert rd))
 
 (defun clj-ast-unparse (node)
   (if (clj-parse--is-leaf? node)
-      (alist-get ':form node)
+      (insert (alist-get ':form node))
     (let ((subnodes (alist-get ':children node)))
       (cl-case (a-get node ':node-type)
-        (:root (clj-parse--string-with-delimiters subnodes "" ""))
-        (:list (clj-parse--string-with-delimiters subnodes "(" ")"))
-        (:vector (clj-parse--string-with-delimiters subnodes "[" "]"))
-        (:set (clj-parse--string-with-delimiters subnodes "#{" "}"))
-        (:map (clj-parse--string-with-delimiters subnodes "{" "}"))
-        (:tag )
-        ))))
+        (:root (clj-ast-unparse-collection subnodes "" ""))
+        (:list (clj-ast-unparse-collection subnodes "(" ")"))
+        (:vector (clj-ast-unparse-collection subnodes "[" "]"))
+        (:set (clj-ast-unparse-collection subnodes "#{" "}"))
+        (:map (clj-ast-unparse-collection subnodes "{" "}"))
+        (:tag )))))
+
+(defun clj-ast-unparse-str (data)
+  (with-temp-buffer
+    (clj-ast-unparse data)
+    (buffer-substring-no-properties (point-min) (point-max))))
 
 (provide 'clj-ast)
 

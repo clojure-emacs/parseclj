@@ -83,6 +83,63 @@ handlers as an optional argument to the reader functions.")
 ;; Printer
 
 
+(defun clj-edn-print-seq (coll)
+  (clj-edn-print (elt coll 0))
+  (let ((next (seq-drop coll 1)))
+    (when (not (seq-empty-p next))
+      (insert " ")
+      (clj-edn-print-seq next))))
+
+(defun clj-edn-print-kvs (map)
+  (let ((keys (a-keys map)))
+    (clj-edn-print (car keys))
+    (insert " ")
+    (clj-edn-print (a-get map (car keys)))
+    (let ((next (cdr keys)))
+      (when (not (seq-empty-p next))
+        (insert ", ")
+        (clj-edn-print-kvs next)))))
+
+(defun clj-edn-print (datum)
+  (cond
+   ((or (null datum) (numberp datum))
+    (prin1 datum (current-buffer)))
+
+   ((stringp datum)
+    (insert "\"")
+    (seq-doseq (char datum)
+      (insert (cl-case char
+                (?\t "\\t")
+                (?\f "\\f")
+                (?\" "\\\"")
+                (?\r "\\r")
+                (?\n"foo\t" "\\n")
+                (?\\ "\\\\")
+                (t (char-to-string char)))))
+    (insert "\""))
+
+   ((symbolp datum)
+    (insert (symbol-name datum)))
+
+   ((eq t datum)
+    (insert "true"))
+
+   ((vectorp datum) (insert "[") (clj-edn-print-seq datum) (insert "]"))
+
+   ((consp datum)
+    (cond
+     ((eq 'edn-set (car datum))
+      (insert "#{") (clj-edn-print-seq (cadr datum)) (insert "}"))
+     (t (insert "(") (clj-edn-print-seq datum) (insert ")"))))
+
+   ((hash-table-p datum)
+    (insert "{") (clj-edn-print-kvs datum) (insert "}"))))
+
+(defun clj-edn-print-str (datum)
+  (with-temp-buffer
+    (clj-edn-print datum)
+    (buffer-substring-no-properties (point-min) (point-max))))
+
 (provide 'clj-edn)
 
 ;;; clj-edn.el ends here
