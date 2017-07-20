@@ -27,6 +27,11 @@
 
 ;;; Code
 
+(require 'ert)
+(require 'clj-ast)
+
+(load "test/clj-parse-test-data.el")
+
 (defmacro define-clj-ast-parse-tests ()
   `(progn
      ,@(mapcar
@@ -43,7 +48,21 @@
                        (should (a-equal (clj-ast-parse) ',(a-get data :ast)))))))))
         clj-parse-test-data)))
 
+(defmacro define-clj-ast-roundtrip-tests ()
+  `(progn
+     ,@(mapcar
+        (lambda (pair)
+          (let ((name (car pair))
+                (data (cdr pair)))
+            (if (and (a-get data :ast) (a-get data :source))
+                (let ((test-name (intern (concat "clj-ast-rountrip:" name))))
+                  `(ert-deftest ,test-name ()
+                     :tags '(clj-ast-rountrip)
+                     (should (a-equal (clj-ast-parse-str (clj-ast-unparse-str ',(a-get data :ast))) ',(a-get data :ast))))))))
+        clj-parse-test-data)))
 
+
+(define-clj-ast-roundtrip-tests)
 (define-clj-ast-parse-tests)
 
 ;;; clj-ast-test.el ends here

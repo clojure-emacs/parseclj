@@ -27,8 +27,8 @@
 
 ;;; Code
 
-(require 'clj-lex)
 (require 'ert)
+(require 'clj-lex)
 
 (ert-deftest clj-lex-test-next ()
   (with-temp-buffer

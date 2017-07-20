@@ -53,10 +53,10 @@
     (cl-case type
       (:root (clj-parse--make-node :root 0 :children children))
       (:discard stack)
-      (:tag (clj-parse--make-node :tag
-                                  pos
-                                  :tag (intern (substring (a-get opener-token 'form) 1))
-                                  :children children))
+      (:tag (list (clj-parse--make-node :tag
+                                        pos
+                                        :tag (intern (substring (a-get opener-token 'form) 1))
+                                        :children children)))
       (t (cons
           (clj-parse--make-node type pos :children children)
           stack)))))
@@ -87,6 +87,13 @@ position of (point)."
     (clj-ast-unparse node))
   (insert rd))
 
+(defun clj-ast-unparse-tag (node)
+  (progn
+    (insert "#")
+    (insert (symbol-name (a-get node :tag)))
+    (insert " ")
+    (clj-ast-unparse (car (a-get node :children)))))
+
 (defun clj-ast-unparse (node)
   (if (clj-parse--is-leaf? node)
       (insert (alist-get ':form node))
@@ -97,7 +104,7 @@ position of (point)."
         (:vector (clj-ast-unparse-collection subnodes "[" "]"))
         (:set (clj-ast-unparse-collection subnodes "#{" "}"))
         (:map (clj-ast-unparse-collection subnodes "{" "}"))
-        (:tag )))))
+        (:tag (clj-ast-unparse-tag node))))))
 
 (defun clj-ast-unparse-str (data)
   (with-temp-buffer

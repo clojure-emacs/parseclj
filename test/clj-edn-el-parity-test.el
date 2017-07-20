@@ -29,8 +29,8 @@
 
 ;;; Code:
 
-(require 'clj-parse)
 (require 'ert)
+(require 'clj-parse)
 (eval-when-compile (require 'subr-x)) ;; for things like hash-table-keys
 
 (ert-deftest whitespace ()
@@ -212,7 +212,8 @@
   :tags '(edn tags)
   (should-error (clj-edn-read-str "#my/type value" clj-edn-test-extra-handlers))
   (should (= 1 (clj-edn-read-str "#my/type (1 2)" clj-edn-test-extra-handlers)))
-  (should (= 2 (clj-edn-read-str "#my/other-type {:foo :bar}" clj-edn-test-extra-handlers))))
+  (should (= 2 (clj-edn-read-str "#my/other-type {:foo :bar}" clj-edn-test-extra-handlers)))
+  (should-error (clj-edn-read-str "#myapp/Person {:first \"Fred\" :last \"Mertz\"}")))
 
 (ert-deftest roundtrip ()
   :tags '(edn roundtrip)
@@ -221,8 +222,7 @@
     (should (map-equal (make-seeded-hash-table :foo :bar)
                        (clj-edn-read-str (clj-edn-print-str (make-seeded-hash-table :foo :bar)))))
     (should (equal '(edn-set (1 2 3 [3 1.11]))
-                   (clj-edn-read-str (clj-edn-print-str '(edn-set (1 2 3 [3 1.11]))))))
-    (should-error (clj-edn-read-str "#myapp/Person {:first \"Fred\" :last \"Mertz\"}"))))
+                   (clj-edn-read-str (clj-edn-print-str '(edn-set (1 2 3 [3 1.11]))))))))
 
 (ert-deftest inst ()
   :tags '(edn inst)

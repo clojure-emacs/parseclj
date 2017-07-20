@@ -30,33 +30,8 @@
 (require 'ert)
 (require 'clj-parse)
 
-(defun clj-parse--deftest-mode (mode test-name test-string expected)
-  (let* ((parse-fn (if (equal mode "edn")
-                       #'clj-edn-read
-                     #'clj-ast-parse))
-         (test-name (intern (concat (symbol-name parse-fn) "-" (symbol-name test-name)))))
-    `(ert-deftest ,test-name ()
-       (with-temp-buffer
-         (insert ,test-string)
-         (goto-char 1)
-         (should (a-equal (,parse-fn) (backquote ,expected)))))))
-
-(defmacro clj-parse-deftest (test-name test-string mode-vs-expected-alist)
-  (declare (indent defun))
-  `(progn
-     ,@(let ((edn (a-get mode-vs-expected-alist "edn")))
-         (when (eq (length edn) 1)
-           `((ert-deftest ,(intern (concat "edn-print-" (symbol-name test-name))) ()
-               (should (equal (clj-edn-print-str (backquote ,(car edn))) ,test-string))))))
-     ,@(mapcar (lambda (vs) (clj-parse--deftest-mode (car vs)
-                                                     test-name
-                                                     test-string
-                                                     (cdr vs)))
-               mode-vs-expected-alist)))
-
-
-;;; Parser modes
-;; ----------------------------------------------------------------------------
+;; needs testing of individual functions. all testing now is at the top level
+;; through parse/unparse
 
 (provide 'clj-parse-test)
 

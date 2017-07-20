@@ -1,4 +1,4 @@
-;;; clj-unparse-test.el --- Print Clojure AST back to code - tests
+;;; clj-ast-unparse-test.el --- Print Clojure AST back to code - tests
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -26,6 +26,9 @@
 ;; Print Clojure AST back to code - tests
 
 ;;; Code:
+
+(require 'ert)
+(require 'clj-ast)
 
 ;;; Printer modes
 ;; ----------------------------------------------------------------------------
@@ -160,4 +163,4 @@
 
 (provide 'clj-unparse-test)
 
-;;; clj-unparse-test.el ends here
+;;; clj-ast-unparse-test.el ends here

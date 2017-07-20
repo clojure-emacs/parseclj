@@ -280,14 +280,14 @@
     :source "#foo/bar [1]"
     :ast '((:node-type . :root)
            (:position . 0)
-           (:children . ((:node-type . :tag)
-                         (:position . 1)
-                         (:tag . foo/bar)
-                         (:children . (((:node-type . :vector)
-                                        (:position . 10)
-                                        (:children . (((:node-type . :number)
-                                                       (:position . 11)
-                                                       (:form . "1")
-                                                       (:value . 1)))))))))))))
+           (:children . (((:node-type . :tag)
+                          (:position . 1)
+                          (:tag . foo/bar)
+                          (:children . (((:node-type . :vector)
+                                         (:position . 10)
+                                         (:children . (((:node-type . :number)
+                                                        (:position . 11)
+                                                        (:form . "1")
+                                                        (:value . 1))))))))))))))
 
 ;;; clj-parse-test-data.el ends here
