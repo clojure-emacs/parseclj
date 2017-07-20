@@ -288,6 +288,11 @@
                                          (:children . (((:node-type . :number)
                                                         (:position . 11)
                                                         (:form . "1")
-                                                        (:value . 1))))))))))))))
+                                                        (:value . 1))))))))))))
+
+   "booleans"
+   (a-list
+    :source "[nil true false]"
+    :edn '([nil t nil]))))
 
 ;;; clj-parse-test-data.el ends here

@@ -118,11 +118,11 @@ handlers as an optional argument to the reader functions.")
                 (t (char-to-string char)))))
     (insert "\""))
 
-   ((symbolp datum)
-    (insert (symbol-name datum)))
-
    ((eq t datum)
     (insert "true"))
+
+   ((symbolp datum)
+    (insert (symbol-name datum)))
 
    ((vectorp datum) (insert "[") (clj-edn-print-seq datum) (insert "]"))
 

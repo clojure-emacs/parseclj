@@ -36,7 +36,11 @@
   (should (equal (clj-edn-print-str nil) "nil"))
   (should (equal (clj-edn-print-str 100) "100"))
   (should (equal (clj-edn-print-str 1.2) "1.2"))
-  (should (equal (clj-edn-print-str [1 2 3]) "[1 2 3]")))
+  (should (equal (clj-edn-print-str [1 2 3]) "[1 2 3]"))
+  (should (equal (clj-edn-print-str t) "true")))
+
+(ert-deftest clj-edn-read-test ()
+  (should (equal (clj-edn-read-str "true") t)))
 
 (defmacro define-clj-edn-read-tests ()
   `(progn
