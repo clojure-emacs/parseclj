@@ -4,7 +4,7 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((emacs "25") (a "0.1.0alpha3"))
+;; Package-Requires: ((emacs "25") (a "0.1.0alpha4"))
 ;; Version: 0.1.0
 
 ;; This file is not part of GNU Emacs.
