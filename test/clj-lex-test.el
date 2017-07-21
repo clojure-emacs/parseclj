@@ -1,4 +1,4 @@
-;;; clj-lex-test.el --- Clojure/EDN parser
+;;; clj-lex-test.el --- Unit tests for the lexer
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -21,8 +21,14 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
-(require 'clj-lex)
+;;; Commentary
+
+;; Unit tests for the lexer
+
+;;; Code
+
 (require 'ert)
+(require 'clj-lex)
 
 (ert-deftest clj-lex-test-next ()
   (with-temp-buffer

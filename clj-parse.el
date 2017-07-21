@@ -4,7 +4,7 @@
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 ;; Keywords: lisp
-;; Package-Requires: ((dash "2.12.0") (emacs "25") (a "0.1.0alpha2"))
+;; Package-Requires: ((emacs "25") (a "0.1.0alpha4"))
 ;; Version: 0.1.0
 
 ;; This file is not part of GNU Emacs.
@@ -30,10 +30,12 @@
 
 ;;; Code:
 
-(require 'a)
-(require 'dash)
 (require 'cl-lib)
+(require 'a)
+
 (require 'clj-lex)
+(require 'clj-edn)
+(require 'clj-ast)
 
 (defvar clj-parse--leaf-tokens '(:whitespace
                                  :comment
@@ -117,7 +119,7 @@
     (:rparen :lparen)
     (:rbracket :lbracket)
     (:rbrace (clj-lex-token-type
-              (-find (lambda (token) (member (clj-lex-token-type token) '(:lbrace :set))) stack)))))
+              (seq-find (lambda (token) (member (clj-lex-token-type token) '(:lbrace :set))) stack)))))
 
 (defun clj-parse--reduce-coll (stack closer-token reduceN)
   "Reduce collection based on the top of the stack"
@@ -160,120 +162,6 @@
     ;; (message "RESULT: %S" stack)
     stack))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Reducer implementations
-
-(defun clj-parse--make-node (type position &rest kvs)
-  (apply 'a-list ':node-type type ':position position kvs))
-
-;; AST
-
-(defun clj-parse--ast-reduce-leaf (stack token)
-  (if (eq (clj-lex-token-type token) :whitespace)
-      stack
-    (push
-     (clj-parse--make-node (clj-lex-token-type token) (a-get token 'pos)
-                           ':form (a-get token 'form)
-                           ':value (clj-parse--leaf-token-value token))
-     stack)))
-
-(defun clj-parse--ast-reduce-node (stack opener-token children)
-  (let* ((pos (a-get opener-token 'pos))
-         (type (cl-case (clj-lex-token-type opener-token)
-                 (:root :root)
-                 (:lparen :list)
-                 (:lbracket :vector)
-                 (:set :set)
-                 (:lbrace :map)
-                 (:discard :discard))))
-    (cl-case type
-      (:root (clj-parse--make-node :root 0 ':children children))
-      (:discard stack)
-      (t (push
-          (clj-parse--make-node type pos
-                                ':children children)
-          stack)))))
-
-(defun clj-parse-ast ()
-  (clj-parse-reduce #'clj-parse--ast-reduce-leaf #'clj-parse--ast-reduce-node))
-
-; Elisp
-
-(defun clj-parse--edn-reduce-leaf (stack token)
-  (if (member (clj-lex-token-type token) (list :whitespace :comment))
-      stack
-    (push (clj-parse--leaf-token-value token) stack)))
-
-(defun clj-parse--edn-reduce-node (tag-readers)
-  (lambda (stack opener-token children)
-    (let ((token-type (clj-lex-token-type opener-token)))
-      (if (member token-type '(:root :discard))
-          stack
-        (push
-         (cl-case token-type
-           (:lparen children)
-           (:lbracket (apply #'vector children))
-           (:set (list 'edn-set children))
-           (:lbrace (let* ((kvs (seq-partition children 2))
-                           (hash-map (make-hash-table :test 'equal :size (length kvs))))
-                      (seq-do (lambda (pair)
-                                (puthash (car pair) (cadr pair) hash-map))
-                              kvs)
-                      hash-map))
-           (:tag (let* ((tag (intern (substring (a-get opener-token 'form) 1)))
-                        (reader (a-get tag-readers tag :missing)))
-                   (when (eq :missing reader)
-                     (user-error "No reader for tag #%S in %S" tag (a-keys tag-readers)))
-                   (funcall reader (car children)))))
-         stack)))))
-
-(defvar clj-edn-default-tag-readers
-  (a-list 'inst (lambda (s)
-                  (cl-list* 'edn-inst (date-to-time s)))
-          'uuid (lambda (s)
-                  (list 'edn-uuid s)))
-  "Default reader functions for handling tagged literals in EDN.
-These are the ones defined in the EDN spec, #inst and #uuid. It
-is not recommended you change this variable, as this globally
-changes the behavior of the EDN reader. Instead pass your own
-handlers as an optional argument to the reader functions.")
-
-(defun clj-parse-edn (&optional tag-readers)
-  (clj-parse-reduce #'clj-parse--edn-reduce-leaf
-                    (clj-parse--edn-reduce-node (a-merge clj-edn-default-tag-readers tag-readers))))
-
-(defun clj-parse-edn-str (s &optional tag-readers)
-  (with-temp-buffer
-    (insert s)
-    (goto-char 1)
-    (car (clj-parse-edn tag-readers))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Printer implementations
-
-;; AST
-
-(defun clj-parse--reduce-string-leaf (leaf)
-  (alist-get ':form leaf))
-
-(defun clj-parse--string-with-delimiters (nodes ld rd)
-  (concat ld
-          (mapconcat #'clj-parse-ast-print nodes " ")
-          rd))
-
-(defun clj-parse-ast-print (node)
-  (if (clj-parse--is-leaf? node)
-      (clj-parse--reduce-string-leaf node)
-    (let ((subnodes (alist-get ':children node)))
-      (cl-case (a-get node ':node-type)
-        (:root (clj-parse--string-with-delimiters subnodes "" ""))
-        (:list (clj-parse--string-with-delimiters subnodes "(" ")"))
-        (:vector (clj-parse--string-with-delimiters subnodes "[" "]"))
-        (:set (clj-parse--string-with-delimiters subnodes "#{" "}"))
-        (:map (clj-parse--string-with-delimiters subnodes "{" "}"))
-        ;; tagged literals
-        ))))
 
 (provide 'clj-parse)
 

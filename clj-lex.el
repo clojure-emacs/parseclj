@@ -25,15 +25,13 @@
 
 ;; A reader for EDN data files and parser for Clojure source files.
 
-(require 'dash)
-
 (defun clj-lex-token (type form pos &rest args)
   `((type . ,type)
     (form . ,form)
     (pos  . ,pos)
     ,@(mapcar (lambda (pair)
                 (cons (car pair) (cadr pair)))
-              (-partition 2 args))))
+              (seq-partition args 2))))
 
 (defun clj-lex-token-type (token)
   (and (listp token)

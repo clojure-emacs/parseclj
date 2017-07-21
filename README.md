@@ -8,4 +8,4 @@ WIP
 
 &copy; 2017 Arne Brasseur
 
-Distributed under the terms of the [Mozilla Public License 2.0](https://www.mozilla.org/media/MPL/2.0/index.txt). See LICENSE.
+Distributed under the terms of the GNU General Public License 3.0 or later. See LICENSE.
