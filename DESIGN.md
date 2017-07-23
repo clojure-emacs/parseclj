@@ -317,3 +317,174 @@ Beyond that we provide two sets of functions for working with AST nodes.
 - functions for reading values out of ASTs, effectively treating them as the data structure they represent.
 
 This second set of functions is important for applications that need to deal with EDN data, but for which the lossy nature of EDN->Elisp transformation is not an option. For instance, unrepl sends EDN messages, but these messages contain code forms that we need to be able to reproduce. In this case converting `false` to `nil` or a set to a list is not acceptable. Instead we can parse the EDN to an AST, and deal with the AST directly.
+
+## Alternative package layout
+
+**Package**: parseclj
+
+Contains the core parser backend, and the Clojure-to-AST parser
+
+- file: parseclj.el
+
+``` emacs-lisp
+(defun parseclj-parse-clojure (&rest string-and-options)
+  "Parse Clojure source to AST.
+
+Reads either from the current buffer, starting from point, until
+point-max, or reads from the optional string argument.
+
+STRING-AND-OPTIONS can be an optional string, followed by
+key-value pairs to specify parsing options.
+
+- `:lexical-preservation' Retain whitespace, comments, and
+  discards. Defaults to false (`nil').
+- `:fail-fast' Raise an error
+  when encountering invalid syntax. Defaults to true (`t'). ")
+
+(defun parseclj-unparse-clojure (ast &rest options)
+  "Parse Clojure AST to source code.
+
+Given an abstract syntax tree AST (as returned by
+parseclj-parse-clojure), turn it back into source code, and
+insert it into the current buffer.
+
+OPTIONS is a list of key value pairs containing options.
+
+- `:lexical-preservation' If `t', assume the AST contains
+  whitespace. If `nil', insert whitespace between forms. When
+  parsing with `:lexical-preservation', you should unparse the
+  same way. ")
+
+(defun parseclj-unparse-clojure-to-string (ast &rest options)
+  "Parse Clojure AST to a source code string.
+
+Given an abstract syntax tree AST (as returned by
+parseclj-parse-clojure), turn it back into source code, and
+return it as a string
+
+OPTIONS is a list of key value pairs containing options.
+
+- `:lexical-preservation' If `t', assume the AST contains
+  whitespace. If `nil', insert whitespace between forms. When
+  parsing with `:lexical-preservation', you should unparse the
+  same way.")
+```
+
+- file: parseclj-lex.el
+
+``` emacs-lisp
+(defun parseclj-lex-next ()
+  "Move past the token at point, and return the token")
+```
+
+- file: parseclj-ast.el
+
+``` emacs-lisp
+(defun parseclj-ast--reduce-leaf (stack token)
+  "Create a leaf AST node and put it onto the stack.
+
+Given the current parser STACK and a TOKEN coming from the lexer,
+create an AST leaf node and return an updated stack.
+
+Whitespace and comment tokens are ignored (i.e. the stack is
+returned unchanged).
+
+This function is only called for tokens that correspond with AST
+leaf nodes.")
+
+(defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token)
+  "Create a leaf AST node and put it onto the stack.
+
+Given the current parser STACK and a TOKEN coming from the lexer,
+create an AST leaf node and return an updated stack.
+
+This functions creates nodes for whitespace and comment tokens,
+for other tokens it delegates to `parseclj-ast--reduce-leaf'.")
+
+(defun parseclj-ast--reduce-branch (stack type children)
+  "Create a branch AST node and put it onto the stack.
+
+This function is passed the current parser STACK the node TYPE to
+be created, and a list of AST nodes that will become the CHILDREN
+of the newly created node.
+
+This implementation ignores `:discard' nodes (#_), when called
+with a TYPE of `:discard' it returns the stack unchanged.")
+
+(defun parseclj-ast--reduce-branch-with-lexical-preservation (stack type children)
+  "Create a branch AST node and put it onto the stack.
+
+This function is passed the current parser STACK the node TYPE to
+be created, and a list of AST nodes that will become the CHILDREN
+of the newly created node.
+
+This implementation handles `:discard' nodes (#_), for other node
+types it delegates to `parseclj-ast--reduce-branch'.")
+
+(defun parse-clj-ast-value (node)
+  "Given an AST NODE, returns its value.
+
+Recursively convert the AST node into an Emacs Lisp value. E.g.
+turn a `:list' node into a sexp, a `:number' node into a number.
+
+This operation is lossy because not all Clojure types have a
+corresponding type in Emacs. `nil' and `false' form a
+particularly poignant case, both are converted to `nil'.")
+```
+
+**Package**: parseedn
+
+- file: parseedn.el
+
+``` emacs-lisp
+(defun parseedn-read (&rest string-and-options)
+  "Reads an EDN form and converts it an Emacs Lisp value.
+
+Reads either from the current buffer, starting from point, or
+reads from the optional string argument. Only reads the first
+complete form. When used on a buffer, this moves `(point)' to
+after the form.
+
+By default uses an output format that uses tagged lists to
+preserve type information. This makes the conversion lossless,
+but still easy to process.
+
+  \"#{1 2 3}\" => (set (1 2 3))
+  \"false\"    => (false)
+  \"t\"        => t
+  \"true\"     => (true)
+  \"(1 2 3)\"  => (list (1 2 3))
+  \"#uuid \\\"255efd69-dec9-4428-9142-cebd5357fb2a\\\"\"
+    => (uuid \"255efd69-dec9-4428-9142-cebd5357fb2a\")
+
+Alternatively a compatibility mode is available which mimics
+exactly the behavior of `edn-read' as implemented in `edn.el'.
+
+STRING-AND-OPTIONS can be an optional string, followed by
+key-value pairs to specify parsing options.
+
+- `:compat' Mimic edn.el. Defaults to false (`nil').
+- `:tag-readers' An association list mapping symbols to
+  functions, used to parse tagged literals. The function is given
+  the parsed value and given an opportunity to transform it.
+  Defaults for `uuid' and `inst' are provided but can be
+  overridden.
+- `:fail-fast' Raise an error when encountering invalid syntax.
+  Defaults to true (`t'). ")
+
+(defun parseclj-print (value &rest options)
+  "Convert an Emacs Lisp value to EDN.
+
+OPTIONS is a list of key value pairs containing options.
+
+By default assumes that any list is of the form `(type value)'.
+Extra `:tag-writers' can be specified to handle unknown types.
+Alternatively a compatibility mode is available which emulates
+the behavior of `edn.el'
+
+- `:compat' If `t', mimic `edn.el'. Defaults to `false' (`nil').
+  When this is set to `t' then `:tag-writers' is ignored.
+- `:tag-writers' An association list from symbol to function.
+  Each function is given a list including `type' tag, and should
+  return a value that can be handled by `parseclj-print'.")
+```
