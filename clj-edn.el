@@ -46,7 +46,7 @@ handlers as an optional argument to the reader functions.")
       stack
     (cons (parseclj--leaf-token-value token) stack)))
 
-(defun clj-edn-reduce-node (tag-readers)
+(defun clj-edn-reduce-branch (tag-readers)
   (lambda (stack opener-token children)
     (let ((token-type (clj-lex-token-type opener-token)))
       (if (member token-type '(:root :discard))
@@ -71,7 +71,7 @@ handlers as an optional argument to the reader functions.")
 
 (defun clj-edn-read (&optional tag-readers)
   (parseclj-parse #'clj-edn-reduce-leaf
-                    (clj-edn-reduce-node (a-merge clj-edn-default-tag-readers tag-readers))))
+                    (clj-edn-reduce-branch (a-merge clj-edn-default-tag-readers tag-readers))))
 
 (defun clj-edn-read-str (s &optional tag-readers)
   (with-temp-buffer

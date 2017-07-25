@@ -121,23 +121,23 @@ Tokens can be recognized by the `:token-type` key, which must always come first 
 
 ## Shift-reduce parser
 
-The parser is again a single function `parseclj-parse`. It is a higher order function, with much of the final result determined by the `reduce-leaf` and `reduce-node` functions passed in as arguments.
+The parser is again a single function `parseclj-parse`. It is a higher order function, with much of the final result determined by the `reduce-leaf` and `reduce-branch` functions passed in as arguments.
 
 `parseclj-parse` internally operates by using a stack. This stack contains tokens (as returned by `clj-lex-next`), and reduced values.
 
 `reduce-leaf` is a two-argument function. It takes the current value of the stack, and a token, and returns an updated stack, typically by parsing the token to a value and pushing that value onto the stack.
 
-`reduce-node` is a three-argument function. It takes the current value of the stack, a node type, and a list of children, and returns an updated stack.
+`reduce-branch` is a three-argument function. It takes the current value of the stack, a node type, and a list of children, and returns an updated stack.
 
 The parser reads consecutive input tokens. If the token represents a leaf node (like a number, symbol, string), then it calls `reduce-leaf`, giving it a chance to add a value to the stack. If the token is a non-leaf node (a delimiter) it gets put on the stack as-is. This part is known as the "shift" phase.
 
 After "shifting" a value on to the stack, the parser tries to "reduce", by inspecting the top one, two, or three items on the stack.
 
-If the top item is a closing delimiter token, then the parser scans down the stack until it finds a matching opening delimiter. It pops both delimiters and everything in between them off the stack, and passes them to `reduce-node`, which can "reduce" this sequence to a single value (say, a list), and push that item onto the stack.
+If the top item is a closing delimiter token, then the parser scans down the stack until it finds a matching opening delimiter. It pops both delimiters and everything in between them off the stack, and passes them to `reduce-branch`, which can "reduce" this sequence to a single value (say, a list), and push that item onto the stack.
 
 The type of values pushed onto the stack depends on the reducing functions used. The parser only distinguishes between tokens and non-tokens. It follows that a reducing functions should not push raw tokens back onto the stack.
 
-When parsing finishes the stack will contain all parsed forms in reverse order. It will call `reduce-node` once more with a node type of `:root`, to give it a chance to finalize.
+When parsing finishes the stack will contain all parsed forms in reverse order. It will call `reduce-branch` once more with a node type of `:root`, to give it a chance to finalize.
 
 ### Example
 
@@ -157,7 +157,7 @@ An example, when parsing the following EDN, with parsing done up to the position
  ((:token-type . :lparen) (:form . "(") (:pos . 1)))
 ```
 
-Now the parser encounters the first closing parenthesis. It pops `3` and `:lparen` off the stack, and passes `(((:token-type . :lparen) 3 ((:token-type . :rparen)))` to `reduce-node`, which reduces this a single list, and pushes it onto the stack.
+Now the parser encounters the first closing parenthesis. It pops `3` and `:lparen` off the stack, and passes `(((:token-type . :lparen) 3 ((:token-type . :rparen)))` to `reduce-branch`, which reduces this a single list, and pushes it onto the stack.
 
 ``` clojure
 ;; input
@@ -172,7 +172,7 @@ Now the parser encounters the first closing parenthesis. It pops `3` and `:lpare
  ((:token-type . :lparen) (:form . "(") (:pos . 1)))
 ```
 
-Now the parser encounters the second closing parenthesis. It pops everything until `:lparen` off the stack, and passes it to `reduce-node`, which turns the result into a list and pushes it onto the stack.
+Now the parser encounters the second closing parenthesis. It pops everything until `:lparen` off the stack, and passes it to `reduce-branch`, which turns the result into a list and pushes it onto the stack.
 
 ``` clojure
 ;; input
@@ -212,7 +212,7 @@ Unmatched closing delimiter:
 ((1 2 3) ((:token-type . :lparen)))
 ```
 
-In many cases it will be desirable to "fail fast", and raise an error as soon as a syntax error is encountered. A `reduce-node` function can do so if it wishes by checking its input sequence for raw tokens, and raising an error if any are present.
+In many cases it will be desirable to "fail fast", and raise an error as soon as a syntax error is encountered. A `reduce-branch` function can do so if it wishes by checking its input sequence for raw tokens, and raising an error if any are present.
 
 ## EDN vs Clojure
 

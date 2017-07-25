@@ -42,7 +42,7 @@
                            ':value (parseclj--leaf-token-value token))
      stack)))
 
-(defun clj-ast--reduce-node (stack opener-token children)
+(defun clj-ast--reduce-branch (stack opener-token children)
   (let* ((pos (a-get opener-token 'pos))
          (type (clj-lex-token-type opener-token))
          (type (cl-case type
@@ -66,7 +66,7 @@
 
 Parses code in the current buffer, starting from the current
 position of (point)."
-  (parseclj-parse #'clj-ast--reduce-leaf #'clj-ast--reduce-node))
+  (parseclj-parse #'clj-ast--reduce-leaf #'clj-ast--reduce-branch))
 
 (defun clj-ast-parse-str (s)
   "Parse Clojure code in string S to AST."

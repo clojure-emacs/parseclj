@@ -137,7 +137,7 @@
         (message "STACK: %S , CLOSER: %S" stack closer-token)
         (error "Syntax Error")))))
 
-(defun parseclj-parse (reduce-leaf reduce-node)
+(defun parseclj-parse (reduce-leaf reduce-branch)
   (let ((stack nil))
 
     (while (not (eq (clj-lex-token-type (setq token (clj-lex-next))) :eof))
@@ -148,17 +148,17 @@
       (let ((token-type (clj-lex-token-type token)))
         (cond
          ((member token-type parseclj--leaf-tokens) (setf stack (funcall reduce-leaf stack token)))
-         ((member token-type parseclj--closer-tokens) (setf stack (parseclj--reduce-coll stack token reduce-node)))
+         ((member token-type parseclj--closer-tokens) (setf stack (parseclj--reduce-coll stack token reduce-branch)))
          (t (push token stack))))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
       (seq-let [top lookup] stack
         (when (and (parseclj--is-open-prefix? lookup)
                    (not (clj-lex-token? top))) ;; top is fully reduced
-            (setf stack (funcall reduce-node (cddr stack) lookup (list top))))))
+            (setf stack (funcall reduce-branch (cddr stack) lookup (list top))))))
 
     ;; reduce root
-    (setf stack (funcall reduce-node stack '((type . :root) (pos . 1)) stack))
+    (setf stack (funcall reduce-branch stack '((type . :root) (pos . 1)) stack))
     ;; (message "RESULT: %S" stack)
     stack))
 
