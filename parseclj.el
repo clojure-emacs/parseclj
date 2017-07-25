@@ -111,6 +111,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Shift-Reduce Parser
 
+(define-error 'parseclj-parse-error "parseclj: Syntax error")
+
+(defun parseclj--error (format &rest args)
+  "Signal a parse error.
+Takes a FORMAT string and optional ARGS to be passed to
+`format-message'. Signals a 'parseclj-parse-error signal, which
+can be handled with `condition-case'."
+  (signal 'parseclj-parse-error (list (apply #'format-message format args))))
+
 (defun parseclj--find-opener (stack closer-token)
   (cl-case (parseclj-lex-token-type closer-token)
     (:rparen :lparen)
@@ -118,21 +127,29 @@
     (:rbrace (parseclj-lex-token-type
               (seq-find (lambda (token) (member (parseclj-lex-token-type token) '(:lbrace :set))) stack)))))
 
-(defun parseclj--reduce-coll (stack closer-token reduceN)
+(defun parseclj--reduce-coll (stack closer-token reduce-branch options)
   "Reduce collection based on the top of the stack"
   (let ((opener-type (parseclj--find-opener stack closer-token))
+        (fail-fast (a-get options :fail-fast t))
         (coll nil))
-    (while (and stack
-                (not (eq (parseclj-lex-token-type (car stack)) opener-type)))
+    (while (and stack (not (eq (parseclj-lex-token-type (car stack)) opener-type)))
       (push (pop stack) coll))
 
     (if (eq (parseclj-lex-token-type (car stack)) opener-type)
         (let ((node (pop stack)))
-          (funcall reduceN stack node coll))
-      ;; Syntax error
-      (progn
-        (message "STACK: %S , CLOSER: %S" stack closer-token)
-        (error "Syntax Error")))))
+          (when fail-fast
+            (when-let ((token (seq-find #'parseclj-lex-token? coll)))
+              (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
+                               (a-get token 'pos)
+                               (parseclj-lex-token-type token))))
+          (funcall reduce-branch stack node coll))
+
+      (if fail-fast
+          (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
+                           (a-get closer-token 'pos)
+                           (parseclj-lex-token-type closer-token))
+        ;; Unwound the stack without finding a matching paren: return the original stack and continue parsing
+        (reverse coll)))))
 
 (defun parseclj-parse (reduce-leaf reduce-branch &optional options)
   "Clojure/EDN stack-based shift-reduce parser.
@@ -158,7 +175,8 @@ errors.
 OPTIONS is an association list which is passed on to the reducing
 functions.
 "
-  (let ((stack nil))
+  (let ((fail-fast (a-get options :fail-fast t))
+        (stack nil))
 
     (while (not (eq (parseclj-lex-token-type (setq token (parseclj-lex-next))) :eof))
       ;; (message "STACK: %S" stack)
@@ -168,7 +186,7 @@ functions.
       (let ((token-type (parseclj-lex-token-type token)))
         (cond
          ((member token-type parseclj--leaf-tokens) (setf stack (funcall reduce-leaf stack token)))
-         ((member token-type parseclj--closer-tokens) (setf stack (parseclj--reduce-coll stack token reduce-branch)))
+         ((member token-type parseclj--closer-tokens) (setf stack (parseclj--reduce-coll stack token reduce-branch options)))
          (t (push token stack))))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
@@ -179,9 +197,13 @@ functions.
           (setf stack (funcall reduce-branch (cddr stack) lookup (list top))))))
 
     ;; reduce root
-    (setf stack (funcall reduce-branch stack '((type . :root) (pos . 1)) (reverse stack)))
-    ;; (message "RESULT: %S" stack)
-    stack))
+    (when fail-fast
+      (when-let ((token (seq-find #'parseclj-lex-token? stack)))
+        (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
+                         (a-get token 'pos)
+                         (parseclj-lex-token-type token))))
+
+    (funcall reduce-branch stack '((type . :root) (pos . 1)) (reverse stack))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Top level API

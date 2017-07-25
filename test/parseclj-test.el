@@ -64,6 +64,86 @@
                          (:form . "bar")
                          (:value . bar)))))))
 
+(ert-deftest parseclj-parse-clojure-fail-fast-test ()
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "foo]")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 4, unmatched :rbracket"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "[foo")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 1, unmatched :lbracket"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "(1 2 [ 4)")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 6, unmatched :lbracket"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "1 2 #_")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 5, unmatched :discard"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "(1 [2 {3 ( 4}])")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 10, unmatched :lparen")))
+
+(ert-deftest parseclj-parse-clojure-fail-fast-test ()
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "foo]")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 4, unmatched :rbracket"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "[foo")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 1, unmatched :lbracket"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "(1 2 [ 4)")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 6, unmatched :lbracket"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "1 2 #_")
+             (parseclj-parse-error (cadr errdata)))
+           "parseclj: Syntax Error at position 5, unmatched :discard"))
+
+  (should (equal (parseclj-parse-clojure "(1 [2 {3 ( 4}])" :fail-fast nil)
+                 '((:node-type . :root)
+                   (:position . 0)
+                   (:children ((:node-type . :list)
+                               (:position . 1)
+                               (:children ((:node-type . :number)
+                                           (:position . 2)
+                                           (:form . "1")
+                                           (:value . 1))
+                                          ((:node-type . :vector)
+                                           (:position . 4)
+                                           (:children ((:node-type . :number)
+                                                       (:position . 5)
+                                                       (:form . "2")
+                                                       (:value . 2))
+                                                      ((:node-type . :map)
+                                                       (:position . 7)
+                                                       (:children ((:node-type . :number) (:position . 8) (:form . "3") (:value . 3))
+                                                                  ((type . :lparen) (form . "(") (pos . 10))
+                                                                  ((:node-type . :number) (:position . 12) (:form . "4") (:value . 4))))))))))))
+
+  ;; TODO: uneven map forms
+  )
+
 (provide 'parseclj-test)
 
 ;;; parseclj-test.el ends here

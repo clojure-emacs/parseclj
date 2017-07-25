@@ -33,6 +33,9 @@
                 (cons (car pair) (cadr pair)))
               (seq-partition args 2))))
 
+(defun parseclj-lex-token? (token)
+  (and (consp token) (consp (car token)) (eq 'type (caar token))))
+
 (defun parseclj-lex-token-type (token)
   (and (listp token)
        (cdr (assq 'type token))))
