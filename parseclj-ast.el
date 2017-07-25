@@ -1,4 +1,4 @@
-;;; clj-ast.el --- Clojure parser/unparser              -*- lexical-binding: t; -*-
+;;; parseclj-ast.el --- Clojure parser/unparser              -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -33,7 +33,7 @@
 (defun parseclj--make-node (type position &rest kvs)
   (apply 'a-list ':node-type type ':position position kvs))
 
-(defun clj-ast--reduce-leaf (stack token)
+(defun parseclj-ast--reduce-leaf (stack token)
   (if (eq (parseclj-lex-token-type token) :whitespace)
       stack
     (cons
@@ -42,7 +42,7 @@
                            ':value (parseclj--leaf-token-value token))
      stack)))
 
-(defun clj-ast--reduce-branch (stack opener-token children)
+(defun parseclj-ast--reduce-branch (stack opener-token children)
   (let* ((pos (a-get opener-token 'pos))
          (type (parseclj-lex-token-type opener-token))
          (type (cl-case type
@@ -61,56 +61,56 @@
           (parseclj--make-node type pos :children children)
           stack)))))
 
-(defun clj-ast-parse ()
+(defun parseclj-ast-parse ()
   "Parse Clojure code in buffer to AST.
 
 Parses code in the current buffer, starting from the current
 position of (point)."
-  (parseclj-parse #'clj-ast--reduce-leaf #'clj-ast--reduce-branch))
+  (parseclj-parse #'parseclj-ast--reduce-leaf #'parseclj-ast--reduce-branch))
 
-(defun clj-ast-parse-str (s)
+(defun parseclj-ast-parse-str (s)
   "Parse Clojure code in string S to AST."
   (with-temp-buffer
     (insert s)
     (goto-char 1)
-    (clj-ast-parse)))
+    (parseclj-ast-parse)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Unparser
 
-(defun clj-ast-unparse-collection (nodes ld rd)
+(defun parseclj-ast-unparse-collection (nodes ld rd)
   (insert ld)
   (when-let (node (car nodes))
-    (clj-ast-unparse node))
+    (parseclj-ast-unparse node))
   (seq-doseq (node (cdr nodes))
     (insert " ")
-    (clj-ast-unparse node))
+    (parseclj-ast-unparse node))
   (insert rd))
 
-(defun clj-ast-unparse-tag (node)
+(defun parseclj-ast-unparse-tag (node)
   (progn
     (insert "#")
     (insert (symbol-name (a-get node :tag)))
     (insert " ")
-    (clj-ast-unparse (car (a-get node :children)))))
+    (parseclj-ast-unparse (car (a-get node :children)))))
 
-(defun clj-ast-unparse (node)
+(defun parseclj-ast-unparse (node)
   (if (parseclj--is-leaf? node)
       (insert (alist-get ':form node))
     (let ((subnodes (alist-get ':children node)))
       (cl-case (a-get node ':node-type)
-        (:root (clj-ast-unparse-collection subnodes "" ""))
-        (:list (clj-ast-unparse-collection subnodes "(" ")"))
-        (:vector (clj-ast-unparse-collection subnodes "[" "]"))
-        (:set (clj-ast-unparse-collection subnodes "#{" "}"))
-        (:map (clj-ast-unparse-collection subnodes "{" "}"))
-        (:tag (clj-ast-unparse-tag node))))))
+        (:root (parseclj-ast-unparse-collection subnodes "" ""))
+        (:list (parseclj-ast-unparse-collection subnodes "(" ")"))
+        (:vector (parseclj-ast-unparse-collection subnodes "[" "]"))
+        (:set (parseclj-ast-unparse-collection subnodes "#{" "}"))
+        (:map (parseclj-ast-unparse-collection subnodes "{" "}"))
+        (:tag (parseclj-ast-unparse-tag node))))))
 
-(defun clj-ast-unparse-str (data)
+(defun parseclj-ast-unparse-str (data)
   (with-temp-buffer
-    (clj-ast-unparse data)
+    (parseclj-ast-unparse data)
     (buffer-substring-no-properties (point-min) (point-max))))
 
-(provide 'clj-ast)
+(provide 'parseclj-ast)
 
-;;; clj-ast.el ends here
+;;; parseclj-ast.el ends here

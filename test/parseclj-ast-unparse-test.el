@@ -1,4 +1,4 @@
-;;; clj-ast-unparse-test.el --- Print Clojure AST back to code - tests
+;;; parseclj-ast-unparse-test.el --- Print Clojure AST back to code - tests
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -28,14 +28,14 @@
 ;;; Code:
 
 (require 'ert)
-(require 'clj-ast)
+(require 'parseclj-ast)
 
 ;;; Printer modes
 ;; ----------------------------------------------------------------------------
 
-(ert-deftest clj-ast-unparse-list ()
+(ert-deftest parseclj-ast-unparse-list ()
   (should (equal "(0 1 2)"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :list)
                                                        (:position . 1)
@@ -52,17 +52,17 @@
                                                                       (:form . "2")
                                                                       (:value . 2))))))))))))
 
-(ert-deftest clj-ast-unparse-empty-list ()
+(ert-deftest parseclj-ast-unparse-empty-list ()
   (should (equal "()"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :list)
                                                        (:position . 1)
                                                        (:children . nil)))))))))
 
-(ert-deftest clj-ast-unparse-nested-list ()
+(ert-deftest parseclj-ast-unparse-nested-list ()
   (should (equal "((.9 abc (true) (hello)))"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :list)
                                                        (:position . 1)
@@ -89,18 +89,18 @@
                                                                                               (:form . "hello")
                                                                                               (:value . hello))))))))))))))))
 
-(ert-deftest clj-ast-unparse-string ()
+(ert-deftest parseclj-ast-unparse-string ()
   (should (equal "\"abc hello \\t\\\"x\""
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :string)
                                                        (:position . 1)
                                                        (:form . "\"abc hello \\t\\\"x\"")
                                                        (:value . "abc hello \t\"x")))))))))
 
-(ert-deftest clj-ast-unparse-chars ()
+(ert-deftest parseclj-ast-unparse-chars ()
   (should (equal "(\\newline \\return \\space \\tab \\a \\b \\c \\u0078 \\o171)"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :list)
                                                        (:position . 1)
@@ -115,18 +115,18 @@
                                                                      ((:node-type . :character) (:position . 47) (:form . "\\o171") (:value . ?y)))))))))
                  )))
 
-(ert-deftest clj-ast-unparse-keyword ()
+(ert-deftest parseclj-ast-unparse-keyword ()
   (should (equal ":foo-bar"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :keyword)
                                                        (:position . 1)
                                                        (:form . ":foo-bar")
                                                        (:value . :foo-bar)))))))))
 
-(ert-deftest clj-ast-unparse-vector ()
+(ert-deftest parseclj-ast-unparse-vector ()
   (should (equal "[123]"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :vector)
                                                        (:position . 1)
@@ -135,9 +135,9 @@
                                                                       (:form . "123")
                                                                       (:value . 123))))))))))))
 
-(ert-deftest clj-ast-unparse-map ()
+(ert-deftest parseclj-ast-unparse-map ()
   (should (equal "{:count 123}"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :map)
                                                        (:position . 1)
@@ -150,9 +150,9 @@
                                                                       (:form . "123")
                                                                       (:value . 123))))))))))))
 
-(ert-deftest clj-ast-unparse-set ()
+(ert-deftest parseclj-ast-unparse-set ()
   (should (equal "#{:x}"
-                 (clj-ast-unparse-str '((:node-type . :root)
+                 (parseclj-ast-unparse-str '((:node-type . :root)
                                         (:position . 0)
                                         (:children . (((:node-type . :set)
                                                        (:position . 1)
@@ -163,4 +163,4 @@
 
 (provide 'clj-unparse-test)
 
-;;; clj-ast-unparse-test.el ends here
+;;; parseclj-ast-unparse-test.el ends here

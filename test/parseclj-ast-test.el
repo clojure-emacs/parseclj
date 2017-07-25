@@ -1,4 +1,4 @@
-;;; clj-ast-test.el --- Unit tests for AST parsing/unparsing
+;;; parseclj-ast-test.el --- Unit tests for AST parsing/unparsing
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -28,41 +28,41 @@
 ;;; Code
 
 (require 'ert)
-(require 'clj-ast)
+(require 'parseclj-ast)
 
 (load "test/parseclj-test-data.el")
 
-(defmacro define-clj-ast-parse-tests ()
+(defmacro define-parseclj-ast-parse-tests ()
   `(progn
      ,@(mapcar
         (lambda (pair)
           (let ((name (car pair))
                 (data (cdr pair)))
             (if (and (a-get data :source) (a-get data :ast))
-                (let ((test-name (intern (concat "clj-ast-parse:" name))))
+                (let ((test-name (intern (concat "parseclj-ast-parse:" name))))
                   `(ert-deftest ,test-name ()
-                     :tags '(clj-ast)
+                     :tags '(parseclj-ast)
                      (with-temp-buffer
                        (insert ,(a-get data :source))
                        (goto-char 1)
-                       (should (a-equal (clj-ast-parse) ',(a-get data :ast)))))))))
+                       (should (a-equal (parseclj-ast-parse) ',(a-get data :ast)))))))))
         parseclj-test-data)))
 
-(defmacro define-clj-ast-roundtrip-tests ()
+(defmacro define-parseclj-ast-roundtrip-tests ()
   `(progn
      ,@(mapcar
         (lambda (pair)
           (let ((name (car pair))
                 (data (cdr pair)))
             (if (and (a-get data :ast) (a-get data :source))
-                (let ((test-name (intern (concat "clj-ast-rountrip:" name))))
+                (let ((test-name (intern (concat "parseclj-ast-rountrip:" name))))
                   `(ert-deftest ,test-name ()
-                     :tags '(clj-ast-rountrip)
-                     (should (a-equal (clj-ast-parse-str (clj-ast-unparse-str ',(a-get data :ast))) ',(a-get data :ast))))))))
+                     :tags '(parseclj-ast-rountrip)
+                     (should (a-equal (parseclj-ast-parse-str (parseclj-ast-unparse-str ',(a-get data :ast))) ',(a-get data :ast))))))))
         parseclj-test-data)))
 
 
-(define-clj-ast-roundtrip-tests)
-(define-clj-ast-parse-tests)
+(define-parseclj-ast-roundtrip-tests)
+(define-parseclj-ast-parse-tests)
 
-;;; clj-ast-test.el ends here
+;;; parseclj-ast-test.el ends here

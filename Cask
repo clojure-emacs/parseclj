@@ -6,7 +6,7 @@
 
 (files "parseclj-lex.el"
        "clj-edn.el"
-       "clj-ast.el")
+       "parseclj-ast.el")
 
 (development
  (depends-on "a")

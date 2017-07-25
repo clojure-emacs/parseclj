@@ -35,7 +35,7 @@
 
 (require 'parseclj-lex)
 (require 'clj-edn)
-(require 'clj-ast)
+(require 'parseclj-ast)
 
 (defvar parseclj--leaf-tokens '(:whitespace
                                  :comment
