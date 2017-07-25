@@ -137,7 +137,7 @@
         (message "STACK: %S , CLOSER: %S" stack closer-token)
         (error "Syntax Error")))))
 
-(defun parseclj-reduce (reduce-leaf reduce-node)
+(defun parseclj-parse (reduce-leaf reduce-node)
   (let ((stack nil))
 
     (while (not (eq (clj-lex-token-type (setq token (clj-lex-next))) :eof))

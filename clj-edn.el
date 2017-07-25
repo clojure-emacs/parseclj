@@ -70,7 +70,7 @@ handlers as an optional argument to the reader functions.")
          stack)))))
 
 (defun clj-edn-read (&optional tag-readers)
-  (parseclj-reduce #'clj-edn-reduce-leaf
+  (parseclj-parse #'clj-edn-reduce-leaf
                     (clj-edn-reduce-node (a-merge clj-edn-default-tag-readers tag-readers))))
 
 (defun clj-edn-read-str (s &optional tag-readers)

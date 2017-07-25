@@ -66,7 +66,7 @@
 
 Parses code in the current buffer, starting from the current
 position of (point)."
-  (parseclj-reduce #'clj-ast--reduce-leaf #'clj-ast--reduce-node))
+  (parseclj-parse #'clj-ast--reduce-leaf #'clj-ast--reduce-node))
 
 (defun clj-ast-parse-str (s)
   "Parse Clojure code in string S to AST."

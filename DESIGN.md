@@ -121,9 +121,9 @@ Tokens can be recognized by the `:token-type` key, which must always come first 
 
 ## Shift-reduce parser
 
-The parser is again a single function `parseclj-reduce`. It is a higher order function, with much of the final result determined by the `reduce-leaf` and `reduce-node` functions passed in as arguments.
+The parser is again a single function `parseclj-parse`. It is a higher order function, with much of the final result determined by the `reduce-leaf` and `reduce-node` functions passed in as arguments.
 
-`parseclj-reduce` internally operates by using a stack. This stack contains tokens (as returned by `clj-lex-next`), and reduced values.
+`parseclj-parse` internally operates by using a stack. This stack contains tokens (as returned by `clj-lex-next`), and reduced values.
 
 `reduce-leaf` is a two-argument function. It takes the current value of the stack, and a token, and returns an updated stack, typically by parsing the token to a value and pushing that value onto the stack.
 
@@ -186,7 +186,7 @@ Now the parser encounters the second closing parenthesis. It pops everything unt
 
 ### Dealing with parse errors
 
-`parseclj-reduce` needs to be able to parse invalid input. Imagine analyzing a user's buffer while they are editing, to provide contextual help or do linting. Even when delimiters are unbalanced it should still be possible to get a "best effort" parse result. It turns out the shift-reduce approach provides that out of the box. The result of parsing invalid input is a stack which still has unreduced tokens in it.
+`parseclj-parse` needs to be able to parse invalid input. Imagine analyzing a user's buffer while they are editing, to provide contextual help or do linting. Even when delimiters are unbalanced it should still be possible to get a "best effort" parse result. It turns out the shift-reduce approach provides that out of the box. The result of parsing invalid input is a stack which still has unreduced tokens in it.
 
 Unmatched opening delimiter:
 
@@ -421,7 +421,7 @@ of the newly created node.
 This implementation handles `:discard' nodes (#_), for other node
 types it delegates to `parseclj-ast--reduce-branch'.")
 
-(defun parse-clj-ast-value (node)
+(defun parseclj-ast-value (node)
   "Given an AST NODE, returns its value.
 
 Recursively convert the AST node into an Emacs Lisp value. E.g.
