@@ -30,7 +30,7 @@
 (require 'ert)
 (require 'clj-ast)
 
-(load "test/clj-parse-test-data.el")
+(load "test/parseclj-test-data.el")
 
 (defmacro define-clj-ast-parse-tests ()
   `(progn
@@ -46,7 +46,7 @@
                        (insert ,(a-get data :source))
                        (goto-char 1)
                        (should (a-equal (clj-ast-parse) ',(a-get data :ast)))))))))
-        clj-parse-test-data)))
+        parseclj-test-data)))
 
 (defmacro define-clj-ast-roundtrip-tests ()
   `(progn
@@ -59,7 +59,7 @@
                   `(ert-deftest ,test-name ()
                      :tags '(clj-ast-rountrip)
                      (should (a-equal (clj-ast-parse-str (clj-ast-unparse-str ',(a-get data :ast))) ',(a-get data :ast))))))))
-        clj-parse-test-data)))
+        parseclj-test-data)))
 
 
 (define-clj-ast-roundtrip-tests)

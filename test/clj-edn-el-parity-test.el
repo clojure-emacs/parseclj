@@ -24,13 +24,13 @@
 ;;; Commentary:
 
 ;; These tests are copied verbatim from the edn.el source, and adapted to use
-;; our API. This way we assure that clj-parse can act as a drop-in replacement
+;; our API. This way we assure that parseclj can act as a drop-in replacement
 ;; for edn.el.
 
 ;;; Code:
 
 (require 'ert)
-(require 'clj-parse)
+(require 'parseclj)
 (eval-when-compile (require 'subr-x)) ;; for things like hash-table-keys
 
 (ert-deftest whitespace ()

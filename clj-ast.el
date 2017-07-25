@@ -30,16 +30,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parser
 
-(defun clj-parse--make-node (type position &rest kvs)
+(defun parseclj--make-node (type position &rest kvs)
   (apply 'a-list ':node-type type ':position position kvs))
 
 (defun clj-ast--reduce-leaf (stack token)
   (if (eq (clj-lex-token-type token) :whitespace)
       stack
     (cons
-     (clj-parse--make-node (clj-lex-token-type token) (a-get token 'pos)
+     (parseclj--make-node (clj-lex-token-type token) (a-get token 'pos)
                            ':form (a-get token 'form)
-                           ':value (clj-parse--leaf-token-value token))
+                           ':value (parseclj--leaf-token-value token))
      stack)))
 
 (defun clj-ast--reduce-node (stack opener-token children)
@@ -51,14 +51,14 @@
                  (:lbrace :map)
                  (t type))))
     (cl-case type
-      (:root (clj-parse--make-node :root 0 :children children))
+      (:root (parseclj--make-node :root 0 :children children))
       (:discard stack)
-      (:tag (list (clj-parse--make-node :tag
+      (:tag (list (parseclj--make-node :tag
                                         pos
                                         :tag (intern (substring (a-get opener-token 'form) 1))
                                         :children children)))
       (t (cons
-          (clj-parse--make-node type pos :children children)
+          (parseclj--make-node type pos :children children)
           stack)))))
 
 (defun clj-ast-parse ()
@@ -66,7 +66,7 @@
 
 Parses code in the current buffer, starting from the current
 position of (point)."
-  (clj-parse-reduce #'clj-ast--reduce-leaf #'clj-ast--reduce-node))
+  (parseclj-reduce #'clj-ast--reduce-leaf #'clj-ast--reduce-node))
 
 (defun clj-ast-parse-str (s)
   "Parse Clojure code in string S to AST."
@@ -95,7 +95,7 @@ position of (point)."
     (clj-ast-unparse (car (a-get node :children)))))
 
 (defun clj-ast-unparse (node)
-  (if (clj-parse--is-leaf? node)
+  (if (parseclj--is-leaf? node)
       (insert (alist-get ':form node))
     (let ((subnodes (alist-get ':children node)))
       (cl-case (a-get node ':node-type)

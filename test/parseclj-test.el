@@ -1,4 +1,4 @@
-;;; clj-parse-test.el --- Clojure/EDN parser - tests
+;;; parseclj-test.el --- Clojure/EDN parser - tests
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -28,11 +28,11 @@
 ;;; Code:
 
 (require 'ert)
-(require 'clj-parse)
+(require 'parseclj)
 
 ;; needs testing of individual functions. all testing now is at the top level
 ;; through parse/unparse
 
-(provide 'clj-parse-test)
+(provide 'parseclj-test)
 
-;;; clj-parse-test.el ends here
+;;; parseclj-test.el ends here

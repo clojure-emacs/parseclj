@@ -1,10 +1,10 @@
-# clj-parse Design Goals / Roadmap
+# parseclj Design Goals / Roadmap
 
-clj-parse is an Emacs Lisp library for parsing Clojure code and EDN data. It
+parseclj is an Emacs Lisp library for parsing Clojure code and EDN data. It
 supports several input and output formats, all powered by the same shift-reduce
 parser function.
 
-This documents describes the design goals for clj-parse, and as such may describe features which are not implemented yet.
+This documents describes the design goals for parseclj, and as such may describe features which are not implemented yet.
 
 ## Motivation
 
@@ -45,7 +45,7 @@ The implementation is implemented in three parts: a lexer, a parser, and multipl
 
 The *lexer* turns the input text, a buffer, into tokens, data structures representing a single syntactical unit, such as a symbol, a number, or a delimiter like "(", ")", "#{", or "#_".
 
-In clj-parse the lexer is a single function `clj-lex-next` which can be called repeatedly to get a sequence of tokens. `clj-lex-next` returns the token at "point" (i.e. the Emacs cursor position), and moves point to after the token.
+In parseclj the lexer is a single function `clj-lex-next` which can be called repeatedly to get a sequence of tokens. `clj-lex-next` returns the token at "point" (i.e. the Emacs cursor position), and moves point to after the token.
 
 A *token* is a association list (list of cons cells), with keys `:token-type`, `:form`, `:position`, and optionally `:error-type`.
 
@@ -121,9 +121,9 @@ Tokens can be recognized by the `:token-type` key, which must always come first 
 
 ## Shift-reduce parser
 
-The parser is again a single function `clj-parse-reduce`. It is a higher order function, with much of the final result determined by the `reduce-leaf` and `reduce-node` functions passed in as arguments.
+The parser is again a single function `parseclj-reduce`. It is a higher order function, with much of the final result determined by the `reduce-leaf` and `reduce-node` functions passed in as arguments.
 
-`clj-parse-reduce` internally operates by using a stack. This stack contains tokens (as returned by `clj-lex-next`), and reduced values.
+`parseclj-reduce` internally operates by using a stack. This stack contains tokens (as returned by `clj-lex-next`), and reduced values.
 
 `reduce-leaf` is a two-argument function. It takes the current value of the stack, and a token, and returns an updated stack, typically by parsing the token to a value and pushing that value onto the stack.
 
@@ -186,7 +186,7 @@ Now the parser encounters the second closing parenthesis. It pops everything unt
 
 ### Dealing with parse errors
 
-`clj-parse-reduce` needs to be able to parse invalid input. Imagine analyzing a user's buffer while they are editing, to provide contextual help or do linting. Even when delimiters are unbalanced it should still be possible to get a "best effort" parse result. It turns out the shift-reduce approach provides that out of the box. The result of parsing invalid input is a stack which still has unreduced tokens in it.
+`parseclj-reduce` needs to be able to parse invalid input. Imagine analyzing a user's buffer while they are editing, to provide contextual help or do linting. Even when delimiters are unbalanced it should still be possible to get a "best effort" parse result. It turns out the shift-reduce approach provides that out of the box. The result of parsing invalid input is a stack which still has unreduced tokens in it.
 
 Unmatched opening delimiter:
 
@@ -248,7 +248,7 @@ These are the choices that the edn.el library has made:
 
 ### Differences with EDN.el
 
-At the moment the `clj-parse-edn-*` copy the parsing behavior of edn.el, *except* that the character literals `\newline`, `\return`, `\space`, and `\tab` are parsed to their character code (10, 13, 32, and 9 respectively), instead of to symbols.
+At the moment the `parseclj-edn-*` copy the parsing behavior of edn.el, *except* that the character literals `\newline`, `\return`, `\space`, and `\tab` are parsed to their character code (10, 13, 32, and 9 respectively), instead of to symbols.
 
 ## AST
 
@@ -274,7 +274,7 @@ Non-leaf nodes contain a list of `:children`.
 
 ## Public API
 
-clj-parse provides three "parse modes"
+parseclj provides three "parse modes"
 
 - `edn` meant for parsing data, it parses EDN to emacs lisp data
 - `ast` meant for analyzing source code, parses to a "semantic" AST, does not preserve whitespace or comments
@@ -282,30 +282,30 @@ clj-parse provides three "parse modes"
 
 For each of these there can be the following functions
 
-- `clj-parse-{mode}` parse the current buffer starting at `point`, raise an error when syntax/lexing errors are encountered
-- `clj-parse-{mode}-full` same as above but ignore syntax errors, returning a partially parsed result
+- `parseclj-{mode}` parse the current buffer starting at `point`, raise an error when syntax/lexing errors are encountered
+- `parseclj-{mode}-full` same as above but ignore syntax errors, returning a partially parsed result
 - `clj-print-{mode}` turn the result of the corresponding parse function back into Clojure/EDN, and insert it into the current buffer
 
 Each of these have `-str` variant which instead works on strings. This yields a total potential API of:
 
 ```
-(defun clj-parse-edn (&OPTIONAL tag-handler))
-(defun clj-parse-edn-full (&OPTIONAL tag-handler))
+(defun parseclj-edn (&OPTIONAL tag-handler))
+(defun parseclj-edn-full (&OPTIONAL tag-handler))
 (defun clj-print-edn (edn))
-(defun clj-parse-edn-str (string &OPTIONAL tag-handler))
-(defun clj-parse-edn-full-str (string &OPTIONAL tag-handler))
+(defun parseclj-edn-str (string &OPTIONAL tag-handler))
+(defun parseclj-edn-full-str (string &OPTIONAL tag-handler))
 (defun clj-print-edn-str (edn))
-(defun clj-parse-ast ())
-(defun clj-parse-ast-full ())
+(defun parseclj-ast ())
+(defun parseclj-ast-full ())
 (defun clj-print-ast (node))
-(defun clj-parse-ast-str ())
-(defun clj-parse-ast-full-str ())
+(defun parseclj-ast-str ())
+(defun parseclj-ast-full-str ())
 (defun clj-print-ast-str (node))
-(defun clj-parse-source ())
-(defun clj-parse-source-full ())
+(defun parseclj-source ())
+(defun parseclj-source-full ())
 (defun clj-print-source (node))
-(defun clj-parse-source-str ())
-(defun clj-parse-source-full-str ())
+(defun parseclj-source-str ())
+(defun parseclj-source-full-str ())
 (defun clj-print-source-str (node))
 ```
 

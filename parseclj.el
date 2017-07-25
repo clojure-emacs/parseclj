@@ -1,4 +1,4 @@
-;;; clj-parse.el --- Clojure/EDN parser              -*- lexical-binding: t; -*-
+;;; parseclj.el --- Clojure/EDN parser              -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -37,7 +37,7 @@
 (require 'clj-edn)
 (require 'clj-ast)
 
-(defvar clj-parse--leaf-tokens '(:whitespace
+(defvar parseclj--leaf-tokens '(:whitespace
                                  :comment
                                  :number
                                  :nil
@@ -49,15 +49,15 @@
                                  :character)
   "Tokens that represent leaf nodes in the AST.")
 
-(defvar clj-parse--closer-tokens '(:rparen
+(defvar parseclj--closer-tokens '(:rparen
                                    :rbracket
                                    :rbrace)
   "Tokens that represent closing of an AST branch.")
 
-(defun clj-parse--is-leaf? (node)
-  (member (a-get node ':node-type) clj-parse--leaf-tokens))
+(defun parseclj--is-leaf? (node)
+  (member (a-get node ':node-type) parseclj--leaf-tokens))
 
-(defun clj-parse--is-open-prefix? (el)
+(defun parseclj--is-open-prefix? (el)
   (and (member (clj-lex-token-type el) '(:discard :tag))
        (clj-lex-token? el)))
 
@@ -68,7 +68,7 @@
 ;;
 ;; Note that this is kind of broken, we don't correctly detect if \u or \o forms
 ;; don't have the right forms.
-(defun clj-parse--string (s)
+(defun parseclj--string (s)
   (replace-regexp-in-string
    "\\\\o[0-8]\\{3\\}"
    (lambda (x)
@@ -89,7 +89,7 @@
                                   (t (substring x 1))))
                               (substring s 1 -1)))))
 
-(defun clj-parse--character (c)
+(defun parseclj--character (c)
   (let ((first-char (elt c 1)))
     (cond
      ((equal c "\\newline") ?\n)
@@ -100,7 +100,7 @@
      ((eq first-char ?o) (string-to-number (substring c 2) 8))
      (t first-char))))
 
-(defun clj-parse--leaf-token-value (token)
+(defun parseclj--leaf-token-value (token)
   (cl-case (clj-lex-token-type token)
     (:number (string-to-number (alist-get 'form token)))
     (:nil nil)
@@ -108,22 +108,22 @@
     (:false nil)
     (:symbol (intern (alist-get 'form token)))
     (:keyword (intern (alist-get 'form token)))
-    (:string (clj-parse--string (alist-get 'form token)))
-    (:character (clj-parse--character (alist-get 'form token)))))
+    (:string (parseclj--string (alist-get 'form token)))
+    (:character (parseclj--character (alist-get 'form token)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Shift-Reduce Parser
 
-(defun clj-parse--find-opener (stack closer-token)
+(defun parseclj--find-opener (stack closer-token)
   (cl-case (clj-lex-token-type closer-token)
     (:rparen :lparen)
     (:rbracket :lbracket)
     (:rbrace (clj-lex-token-type
               (seq-find (lambda (token) (member (clj-lex-token-type token) '(:lbrace :set))) stack)))))
 
-(defun clj-parse--reduce-coll (stack closer-token reduceN)
+(defun parseclj--reduce-coll (stack closer-token reduceN)
   "Reduce collection based on the top of the stack"
-  (let ((opener-type (clj-parse--find-opener stack closer-token))
+  (let ((opener-type (parseclj--find-opener stack closer-token))
         (coll nil))
     (while (and stack
                 (not (eq (clj-lex-token-type (car stack)) opener-type)))
@@ -137,7 +137,7 @@
         (message "STACK: %S , CLOSER: %S" stack closer-token)
         (error "Syntax Error")))))
 
-(defun clj-parse-reduce (reduce-leaf reduce-node)
+(defun parseclj-reduce (reduce-leaf reduce-node)
   (let ((stack nil))
 
     (while (not (eq (clj-lex-token-type (setq token (clj-lex-next))) :eof))
@@ -147,13 +147,13 @@
       ;; Reduce based on the top item on the stack (collections)
       (let ((token-type (clj-lex-token-type token)))
         (cond
-         ((member token-type clj-parse--leaf-tokens) (setf stack (funcall reduce-leaf stack token)))
-         ((member token-type clj-parse--closer-tokens) (setf stack (clj-parse--reduce-coll stack token reduce-node)))
+         ((member token-type parseclj--leaf-tokens) (setf stack (funcall reduce-leaf stack token)))
+         ((member token-type parseclj--closer-tokens) (setf stack (parseclj--reduce-coll stack token reduce-node)))
          (t (push token stack))))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
       (seq-let [top lookup] stack
-        (when (and (clj-parse--is-open-prefix? lookup)
+        (when (and (parseclj--is-open-prefix? lookup)
                    (not (clj-lex-token? top))) ;; top is fully reduced
             (setf stack (funcall reduce-node (cddr stack) lookup (list top))))))
 
@@ -163,6 +163,6 @@
     stack))
 
 
-(provide 'clj-parse)
+(provide 'parseclj)
 
-;;; clj-parse.el ends here
+;;; parseclj.el ends here

@@ -1,4 +1,4 @@
-;;; clj-parse-test-data.el --- Clojure/EDN parser - test data
+;;; parseclj-test-data.el --- Clojure/EDN parser - test data
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(setq clj-parse-test-data
+(setq parseclj-test-data
   (a-list
 
    "simple-list"
@@ -295,4 +295,4 @@
     :source "[nil true false]"
     :edn '([nil t nil]))))
 
-;;; clj-parse-test-data.el ends here
+;;; parseclj-test-data.el ends here

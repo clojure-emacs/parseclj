@@ -28,9 +28,9 @@
 ;;; Code
 
 (require 'ert)
-(require 'clj-parse)
+(require 'parseclj)
 
-(load "test/clj-parse-test-data.el")
+(load "test/parseclj-test-data.el")
 
 (ert-deftest clj-edn-print-test ()
   (should (equal (clj-edn-print-str nil) "nil"))
@@ -56,7 +56,7 @@
                        (insert ,(a-get data :source))
                        (goto-char 1)
                        (should (a-equal (clj-edn-read) ',(a-get data :edn)))))))))
-        clj-parse-test-data)))
+        parseclj-test-data)))
 
 (defmacro define-clj-edn-roundtrip-tests ()
   `(progn
@@ -69,7 +69,7 @@
                   `(ert-deftest ,test-name ()
                      :tags '(clj-edn-rountrip)
                      (should (equal (clj-edn-print-str (car ',(a-get data :edn))) ,(a-get data :source))))))))
-        clj-parse-test-data)))
+        parseclj-test-data)))
 
 (define-clj-edn-read-tests)
 (define-clj-edn-roundtrip-tests)
