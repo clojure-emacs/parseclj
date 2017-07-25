@@ -34,17 +34,17 @@
   (apply 'a-list ':node-type type ':position position kvs))
 
 (defun clj-ast--reduce-leaf (stack token)
-  (if (eq (clj-lex-token-type token) :whitespace)
+  (if (eq (parseclj-lex-token-type token) :whitespace)
       stack
     (cons
-     (parseclj--make-node (clj-lex-token-type token) (a-get token 'pos)
+     (parseclj--make-node (parseclj-lex-token-type token) (a-get token 'pos)
                            ':form (a-get token 'form)
                            ':value (parseclj--leaf-token-value token))
      stack)))
 
 (defun clj-ast--reduce-branch (stack opener-token children)
   (let* ((pos (a-get opener-token 'pos))
-         (type (clj-lex-token-type opener-token))
+         (type (parseclj-lex-token-type opener-token))
          (type (cl-case type
                  (:lparen :list)
                  (:lbracket :vector)

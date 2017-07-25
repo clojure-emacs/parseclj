@@ -42,13 +42,13 @@ changes the behavior of the EDN reader. Instead pass your own
 handlers as an optional argument to the reader functions.")
 
 (defun clj-edn-reduce-leaf (stack token)
-  (if (member (clj-lex-token-type token) (list :whitespace :comment))
+  (if (member (parseclj-lex-token-type token) (list :whitespace :comment))
       stack
     (cons (parseclj--leaf-token-value token) stack)))
 
 (defun clj-edn-reduce-branch (tag-readers)
   (lambda (stack opener-token children)
-    (let ((token-type (clj-lex-token-type opener-token)))
+    (let ((token-type (parseclj-lex-token-type opener-token)))
       (if (member token-type '(:root :discard))
           stack
         (cons

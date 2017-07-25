@@ -1,4 +1,4 @@
-;;; clj-lex.el --- Clojure/EDN Lexer
+;;; parseclj-lex.el --- Clojure/EDN Lexer
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -25,7 +25,7 @@
 
 ;; A reader for EDN data files and parser for Clojure source files.
 
-(defun clj-lex-token (type form pos &rest args)
+(defun parseclj-lex-token (type form pos &rest args)
   `((type . ,type)
     (form . ,form)
     (pos  . ,pos)
@@ -33,17 +33,17 @@
                 (cons (car pair) (cadr pair)))
               (seq-partition args 2))))
 
-(defun clj-lex-token-type (token)
+(defun parseclj-lex-token-type (token)
   (and (listp token)
        (cdr (assq 'type token))))
 
-(defun clj-lex-token? (token)
+(defun parseclj-lex-token? (token)
   (and (listp token)
        (consp (car token))
        (eq 'type (caar token))
        (not (listp (cdar token)))))
 
-(defun clj-lex-at-whitespace? ()
+(defun parseclj-lex-at-whitespace? ()
   (let ((char (char-after (point))))
     (or (equal char ?\ )
         (equal char ?\t)
@@ -51,44 +51,44 @@
         (equal char ?\r)
         (equal char ?,))))
 
-(defun clj-lex-at-eof? ()
+(defun parseclj-lex-at-eof? ()
   (eq (point) (point-max)))
 
-(defun clj-lex-whitespace ()
+(defun parseclj-lex-whitespace ()
   (let ((pos (point)))
-    (while (clj-lex-at-whitespace?)
+    (while (parseclj-lex-at-whitespace?)
       (right-char))
-    (clj-lex-token :whitespace
+    (parseclj-lex-token :whitespace
                    (buffer-substring-no-properties pos (point))
                    pos)))
 
-(defun clj-lex-skip-digits ()
+(defun parseclj-lex-skip-digits ()
   (while (and (char-after (point))
               (<= ?0 (char-after (point)))
               (<= (char-after (point)) ?9))
     (right-char)))
 
-(defun clj-lex-skip-number ()
+(defun parseclj-lex-skip-number ()
   ;; [\+\-]?\d+\.\d+
   (when (member (char-after (point)) '(?+ ?-))
     (right-char))
 
-  (clj-lex-skip-digits)
+  (parseclj-lex-skip-digits)
 
   (when (eq (char-after (point)) ?.)
     (right-char))
 
-  (clj-lex-skip-digits))
+  (parseclj-lex-skip-digits))
 
-(defun clj-lex-number ()
+(defun parseclj-lex-number ()
   (let ((pos (point)))
-    (clj-lex-skip-number)
+    (parseclj-lex-skip-number)
 
     ;; 10110r2 or 4.3e+22
     (when (member (char-after (point)) '(?E ?e ?r))
       (right-char))
 
-    (clj-lex-skip-number)
+    (parseclj-lex-skip-number)
 
     ;; trailing M
     (when (eq (char-after (point)) ?M)
@@ -100,26 +100,26 @@
                         (and (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?& ?= ?< ?> ?/)))))
           (progn
             (right-char)
-            (clj-lex-token :lex-error
+            (parseclj-lex-token :lex-error
                            (buffer-substring-no-properties pos (point))
                            pos
                            'error-type :invalid-number-format))
 
-        (clj-lex-token :number
+        (parseclj-lex-token :number
                        (buffer-substring-no-properties pos (point))
                        pos)))))
 
 
-(defun clj-lex-digit? (char)
+(defun parseclj-lex-digit? (char)
   (and char (<= ?0 char) (<= char ?9)))
 
-(defun clj-lex-at-number? ()
+(defun parseclj-lex-at-number? ()
   (let ((char (char-after (point))))
-    (or (clj-lex-digit? char)
+    (or (parseclj-lex-digit? char)
         (and (member char '(?- ?+ ?.))
-             (clj-lex-digit? (char-after (1+ (point))))))))
+             (parseclj-lex-digit? (char-after (1+ (point))))))))
 
-(defun clj-lex-symbol-start? (char &optional alpha-only)
+(defun parseclj-lex-symbol-start? (char &optional alpha-only)
   "Symbols begin with a non-numeric character and can contain
 alphanumeric characters and . * + ! - _ ? $ % & = < >. If -, + or
 . are the first character, the second character (if any) must be
@@ -133,77 +133,77 @@ behavior."
                      (and (<= ?A char) (<= char ?Z))
                      (and (not alpha-only) (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/))))))))
 
-(defun clj-lex-symbol-rest? (char)
-  (or (clj-lex-symbol-start? char)
-      (clj-lex-digit? char)
+(defun parseclj-lex-symbol-rest? (char)
+  (or (parseclj-lex-symbol-start? char)
+      (parseclj-lex-digit? char)
       (eq ?: char)
       (eq ?# char)))
 
-(defun clj-lex-get-symbol-at-point (pos)
+(defun parseclj-lex-get-symbol-at-point (pos)
   "Return the symbol at point."
-  (while (clj-lex-symbol-rest? (char-after (point)))
+  (while (parseclj-lex-symbol-rest? (char-after (point)))
     (right-char))
   (buffer-substring-no-properties pos (point)))
 
-(defun clj-lex-symbol ()
+(defun parseclj-lex-symbol ()
   (let ((pos (point)))
     (right-char)
-    (let ((sym (clj-lex-get-symbol-at-point pos)))
+    (let ((sym (parseclj-lex-get-symbol-at-point pos)))
       (cond
-       ((equal sym "nil") (clj-lex-token :nil "nil" pos))
-       ((equal sym "true") (clj-lex-token :true "true" pos))
-       ((equal sym "false") (clj-lex-token :false "false" pos))
-       (t (clj-lex-token :symbol sym pos))))))
+       ((equal sym "nil") (parseclj-lex-token :nil "nil" pos))
+       ((equal sym "true") (parseclj-lex-token :true "true" pos))
+       ((equal sym "false") (parseclj-lex-token :false "false" pos))
+       (t (parseclj-lex-token :symbol sym pos))))))
 
-(defun clj-lex-string ()
+(defun parseclj-lex-string ()
   (let ((pos (point)))
     (right-char)
-    (while (not (or (equal (char-after (point)) ?\") (clj-lex-at-eof?)))
+    (while (not (or (equal (char-after (point)) ?\") (parseclj-lex-at-eof?)))
       (if (equal (char-after (point)) ?\\)
           (right-char 2)
         (right-char)))
     (if (equal (char-after (point)) ?\")
         (progn
           (right-char)
-          (clj-lex-token :string (buffer-substring-no-properties pos (point)) pos))
-      (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos))))
+          (parseclj-lex-token :string (buffer-substring-no-properties pos (point)) pos))
+      (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos))))
 
-(defun clj-lex-lookahead (n)
+(defun parseclj-lex-lookahead (n)
   (buffer-substring-no-properties (point) (min (+ (point) n) (point-max))))
 
-(defun clj-lex-character ()
+(defun parseclj-lex-character ()
   (let ((pos (point)))
     (right-char)
     (cond
-     ((equal (clj-lex-lookahead 3) "tab")
+     ((equal (parseclj-lex-lookahead 3) "tab")
       (right-char 3)
-      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+      (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
-     ((equal (clj-lex-lookahead 5) "space")
+     ((equal (parseclj-lex-lookahead 5) "space")
       (right-char 5)
-      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+      (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
-     ((equal (clj-lex-lookahead 6) "return")
+     ((equal (parseclj-lex-lookahead 6) "return")
       (right-char 6)
-      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+      (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
-     ((equal (clj-lex-lookahead 7) "newline")
+     ((equal (parseclj-lex-lookahead 7) "newline")
       (right-char 7)
-      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+      (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
      ((equal (char-after (point)) ?u)
       (right-char 5)
-      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+      (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
      ((equal (char-after (point)) ?o)
       (right-char 4)
-      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
+      (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
      (t
       (right-char)
-      (clj-lex-token :character (buffer-substring-no-properties pos (point)) pos)))))
+      (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos)))))
 
-(defun clj-lex-keyword ()
+(defun parseclj-lex-keyword ()
   (let ((pos (point)))
     (right-char)
     (when (equal (char-after (point)) ?:) ;; same-namespace keyword
@@ -211,70 +211,70 @@ behavior."
     (if (equal (char-after (point)) ?:) ;; three colons in a row => lex-error
         (progn
           (right-char)
-          (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword))
+          (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword))
       (progn
-        (while (or (clj-lex-symbol-rest? (char-after (point)))
+        (while (or (parseclj-lex-symbol-rest? (char-after (point)))
                    (equal (char-after (point)) ?#))
           (right-char))
-        (clj-lex-token :keyword (buffer-substring-no-properties pos (point)) pos)))))
+        (parseclj-lex-token :keyword (buffer-substring-no-properties pos (point)) pos)))))
 
-(defun clj-lex-comment ()
+(defun parseclj-lex-comment ()
   (let ((pos (point)))
     (goto-char (line-end-position))
     (when (equal (char-after (point)) ?\n)
       (right-char))
-    (clj-lex-token :comment (buffer-substring-no-properties pos (point)) pos)))
+    (parseclj-lex-token :comment (buffer-substring-no-properties pos (point)) pos)))
 
-(defun clj-lex-next ()
-  (if (clj-lex-at-eof?)
-      (clj-lex-token :eof nil (point))
+(defun parseclj-lex-next ()
+  (if (parseclj-lex-at-eof?)
+      (parseclj-lex-token :eof nil (point))
     (let ((char (char-after (point)))
           (pos  (point)))
       (cond
-       ((clj-lex-at-whitespace?)
-        (clj-lex-whitespace))
+       ((parseclj-lex-at-whitespace?)
+        (parseclj-lex-whitespace))
 
        ((equal char ?\()
         (right-char)
-        (clj-lex-token :lparen "(" pos))
+        (parseclj-lex-token :lparen "(" pos))
 
        ((equal char ?\))
         (right-char)
-        (clj-lex-token :rparen ")" pos))
+        (parseclj-lex-token :rparen ")" pos))
 
        ((equal char ?\[)
         (right-char)
-        (clj-lex-token :lbracket "[" pos))
+        (parseclj-lex-token :lbracket "[" pos))
 
        ((equal char ?\])
         (right-char)
-        (clj-lex-token :rbracket "]" pos))
+        (parseclj-lex-token :rbracket "]" pos))
 
        ((equal char ?{)
         (right-char)
-        (clj-lex-token :lbrace "{" pos))
+        (parseclj-lex-token :lbrace "{" pos))
 
        ((equal char ?})
         (right-char)
-        (clj-lex-token :rbrace "}" pos))
+        (parseclj-lex-token :rbrace "}" pos))
 
-       ((clj-lex-at-number?)
-        (clj-lex-number))
+       ((parseclj-lex-at-number?)
+        (parseclj-lex-number))
 
-       ((clj-lex-symbol-start? char)
-        (clj-lex-symbol))
+       ((parseclj-lex-symbol-start? char)
+        (parseclj-lex-symbol))
 
        ((equal char ?\")
-        (clj-lex-string))
+        (parseclj-lex-string))
 
        ((equal char ?\\)
-        (clj-lex-character))
+        (parseclj-lex-character))
 
        ((equal char ?:)
-        (clj-lex-keyword))
+        (parseclj-lex-keyword))
 
        ((equal char ?\;)
-        (clj-lex-comment))
+        (parseclj-lex-comment))
 
        ((equal char ?#)
         (right-char)
@@ -282,22 +282,22 @@ behavior."
           (cond
            ((equal char ?{)
             (right-char)
-            (clj-lex-token :set "#{" pos))
+            (parseclj-lex-token :set "#{" pos))
            ((equal char ?_)
             (right-char)
-            (clj-lex-token :discard "#_" pos))
-           ((clj-lex-symbol-start? char t)
+            (parseclj-lex-token :discard "#_" pos))
+           ((parseclj-lex-symbol-start? char t)
             (right-char)
-            (clj-lex-token :tag (concat "#" (clj-lex-get-symbol-at-point (1+ pos))) pos))
+            (parseclj-lex-token :tag (concat "#" (parseclj-lex-get-symbol-at-point (1+ pos))) pos))
            (t
-            (while (not (or (clj-lex-at-whitespace?)
-                            (clj-lex-at-eof?)))
+            (while (not (or (parseclj-lex-at-whitespace?)
+                            (parseclj-lex-at-eof?)))
               (right-char))
-            (clj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-hashtag-dispatcher)))))
+            (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-hashtag-dispatcher)))))
 
        (t
         (concat ":(" (char-to-string char)))))))
 
-(provide 'clj-lex)
+(provide 'parseclj-lex)
 
-;;; clj-lex.el ends here
+;;; parseclj-lex.el ends here

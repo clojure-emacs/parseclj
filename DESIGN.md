@@ -45,11 +45,11 @@ The implementation is implemented in three parts: a lexer, a parser, and multipl
 
 The *lexer* turns the input text, a buffer, into tokens, data structures representing a single syntactical unit, such as a symbol, a number, or a delimiter like "(", ")", "#{", or "#_".
 
-In parseclj the lexer is a single function `clj-lex-next` which can be called repeatedly to get a sequence of tokens. `clj-lex-next` returns the token at "point" (i.e. the Emacs cursor position), and moves point to after the token.
+In parseclj the lexer is a single function `parseclj-lex-next` which can be called repeatedly to get a sequence of tokens. `parseclj-lex-next` returns the token at "point" (i.e. the Emacs cursor position), and moves point to after the token.
 
 A *token* is a association list (list of cons cells), with keys `:token-type`, `:form`, `:position`, and optionally `:error-type`.
 
-Note: we don't add line/column numbers to the token, the consumer can add these if needed based on the position of point before calling `clj-lex-next`.
+Note: we don't add line/column numbers to the token, the consumer can add these if needed based on the position of point before calling `parseclj-lex-next`.
 
 Example:
 
@@ -123,7 +123,7 @@ Tokens can be recognized by the `:token-type` key, which must always come first 
 
 The parser is again a single function `parseclj-parse`. It is a higher order function, with much of the final result determined by the `reduce-leaf` and `reduce-branch` functions passed in as arguments.
 
-`parseclj-parse` internally operates by using a stack. This stack contains tokens (as returned by `clj-lex-next`), and reduced values.
+`parseclj-parse` internally operates by using a stack. This stack contains tokens (as returned by `parseclj-lex-next`), and reduced values.
 
 `reduce-leaf` is a two-argument function. It takes the current value of the stack, and a token, and returns an updated stack, typically by parsing the token to a value and pushing that value onto the stack.
 

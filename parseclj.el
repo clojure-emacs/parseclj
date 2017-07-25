@@ -33,7 +33,7 @@
 (require 'cl-lib)
 (require 'a)
 
-(require 'clj-lex)
+(require 'parseclj-lex)
 (require 'clj-edn)
 (require 'clj-ast)
 
@@ -58,8 +58,8 @@
   (member (a-get node ':node-type) parseclj--leaf-tokens))
 
 (defun parseclj--is-open-prefix? (el)
-  (and (member (clj-lex-token-type el) '(:discard :tag))
-       (clj-lex-token? el)))
+  (and (member (parseclj-lex-token-type el) '(:discard :tag))
+       (parseclj-lex-token? el)))
 
 ;; The EDN spec is not clear about wether \u0123 and \o012 are supported in
 ;; strings. They are described as character literals, but not as string escape
@@ -101,7 +101,7 @@
      (t first-char))))
 
 (defun parseclj--leaf-token-value (token)
-  (cl-case (clj-lex-token-type token)
+  (cl-case (parseclj-lex-token-type token)
     (:number (string-to-number (alist-get 'form token)))
     (:nil nil)
     (:true t)
@@ -115,21 +115,21 @@
 ;;; Shift-Reduce Parser
 
 (defun parseclj--find-opener (stack closer-token)
-  (cl-case (clj-lex-token-type closer-token)
+  (cl-case (parseclj-lex-token-type closer-token)
     (:rparen :lparen)
     (:rbracket :lbracket)
-    (:rbrace (clj-lex-token-type
-              (seq-find (lambda (token) (member (clj-lex-token-type token) '(:lbrace :set))) stack)))))
+    (:rbrace (parseclj-lex-token-type
+              (seq-find (lambda (token) (member (parseclj-lex-token-type token) '(:lbrace :set))) stack)))))
 
 (defun parseclj--reduce-coll (stack closer-token reduceN)
   "Reduce collection based on the top of the stack"
   (let ((opener-type (parseclj--find-opener stack closer-token))
         (coll nil))
     (while (and stack
-                (not (eq (clj-lex-token-type (car stack)) opener-type)))
+                (not (eq (parseclj-lex-token-type (car stack)) opener-type)))
       (push (pop stack) coll))
 
-    (if (eq (clj-lex-token-type (car stack)) opener-type)
+    (if (eq (parseclj-lex-token-type (car stack)) opener-type)
         (let ((node (pop stack)))
           (funcall reduceN stack node coll))
       ;; Syntax error
@@ -140,12 +140,12 @@
 (defun parseclj-parse (reduce-leaf reduce-branch)
   (let ((stack nil))
 
-    (while (not (eq (clj-lex-token-type (setq token (clj-lex-next))) :eof))
+    (while (not (eq (parseclj-lex-token-type (setq token (parseclj-lex-next))) :eof))
       ;; (message "STACK: %S" stack)
       ;; (message "TOKEN: %S\n" token)
 
       ;; Reduce based on the top item on the stack (collections)
-      (let ((token-type (clj-lex-token-type token)))
+      (let ((token-type (parseclj-lex-token-type token)))
         (cond
          ((member token-type parseclj--leaf-tokens) (setf stack (funcall reduce-leaf stack token)))
          ((member token-type parseclj--closer-tokens) (setf stack (parseclj--reduce-coll stack token reduce-branch)))
@@ -154,7 +154,7 @@
       ;; Reduce based on top two items on the stack (special prefixed elements)
       (seq-let [top lookup] stack
         (when (and (parseclj--is-open-prefix? lookup)
-                   (not (clj-lex-token? top))) ;; top is fully reduced
+                   (not (parseclj-lex-token? top))) ;; top is fully reduced
             (setf stack (funcall reduce-branch (cddr stack) lookup (list top))))))
 
     ;; reduce root

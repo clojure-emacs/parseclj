@@ -4,7 +4,7 @@
 
 (package-file "parseclj.el")
 
-(files "clj-lex.el"
+(files "parseclj-lex.el"
        "clj-edn.el"
        "clj-ast.el")
 
