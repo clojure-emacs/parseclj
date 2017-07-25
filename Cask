@@ -5,7 +5,7 @@
 (package-file "parseclj.el")
 
 (files "parseclj-lex.el"
-       "clj-edn.el"
+       "parseedn.el"
        "parseclj-ast.el")
 
 (development

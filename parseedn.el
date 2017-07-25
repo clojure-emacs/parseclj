@@ -1,4 +1,4 @@
-;;; clj-edn.el --- EDN reader/writer              -*- lexical-binding: t; -*-
+;;; parseedn.el --- EDN reader/writer              -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -30,7 +30,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Reader
 
-(defvar clj-edn-default-tag-readers
+(defvar parseedn-default-tag-readers
   (a-list 'inst (lambda (s)
                   (cl-list* 'edn-inst (date-to-time s)))
           'uuid (lambda (s)
@@ -41,12 +41,12 @@ is not recommended you change this variable, as this globally
 changes the behavior of the EDN reader. Instead pass your own
 handlers as an optional argument to the reader functions.")
 
-(defun clj-edn-reduce-leaf (stack token)
+(defun parseedn-reduce-leaf (stack token)
   (if (member (parseclj-lex-token-type token) (list :whitespace :comment))
       stack
     (cons (parseclj--leaf-token-value token) stack)))
 
-(defun clj-edn-reduce-branch (tag-readers)
+(defun parseedn-reduce-branch (tag-readers)
   (lambda (stack opener-token children)
     (let ((token-type (parseclj-lex-token-type opener-token)))
       (if (member token-type '(:root :discard))
@@ -69,38 +69,38 @@ handlers as an optional argument to the reader functions.")
                    (funcall reader (car children)))))
          stack)))))
 
-(defun clj-edn-read (&optional tag-readers)
-  (parseclj-parse #'clj-edn-reduce-leaf
-                    (clj-edn-reduce-branch (a-merge clj-edn-default-tag-readers tag-readers))))
+(defun parseedn-read (&optional tag-readers)
+  (parseclj-parse #'parseedn-reduce-leaf
+                    (parseedn-reduce-branch (a-merge parseedn-default-tag-readers tag-readers))))
 
-(defun clj-edn-read-str (s &optional tag-readers)
+(defun parseedn-read-str (s &optional tag-readers)
   (with-temp-buffer
     (insert s)
     (goto-char 1)
-    (car (clj-edn-read tag-readers))))
+    (car (parseedn-read tag-readers))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Printer
 
 
-(defun clj-edn-print-seq (coll)
-  (clj-edn-print (elt coll 0))
+(defun parseedn-print-seq (coll)
+  (parseedn-print (elt coll 0))
   (let ((next (seq-drop coll 1)))
     (when (not (seq-empty-p next))
       (insert " ")
-      (clj-edn-print-seq next))))
+      (parseedn-print-seq next))))
 
-(defun clj-edn-print-kvs (map)
+(defun parseedn-print-kvs (map)
   (let ((keys (a-keys map)))
-    (clj-edn-print (car keys))
+    (parseedn-print (car keys))
     (insert " ")
-    (clj-edn-print (a-get map (car keys)))
+    (parseedn-print (a-get map (car keys)))
     (let ((next (cdr keys)))
       (when (not (seq-empty-p next))
         (insert ", ")
-        (clj-edn-print-kvs next)))))
+        (parseedn-print-kvs next)))))
 
-(defun clj-edn-print (datum)
+(defun parseedn-print (datum)
   (cond
    ((or (null datum) (numberp datum))
     (prin1 datum (current-buffer)))
@@ -124,22 +124,22 @@ handlers as an optional argument to the reader functions.")
    ((symbolp datum)
     (insert (symbol-name datum)))
 
-   ((vectorp datum) (insert "[") (clj-edn-print-seq datum) (insert "]"))
+   ((vectorp datum) (insert "[") (parseedn-print-seq datum) (insert "]"))
 
    ((consp datum)
     (cond
      ((eq 'edn-set (car datum))
-      (insert "#{") (clj-edn-print-seq (cadr datum)) (insert "}"))
-     (t (insert "(") (clj-edn-print-seq datum) (insert ")"))))
+      (insert "#{") (parseedn-print-seq (cadr datum)) (insert "}"))
+     (t (insert "(") (parseedn-print-seq datum) (insert ")"))))
 
    ((hash-table-p datum)
-    (insert "{") (clj-edn-print-kvs datum) (insert "}"))))
+    (insert "{") (parseedn-print-kvs datum) (insert "}"))))
 
-(defun clj-edn-print-str (datum)
+(defun parseedn-print-str (datum)
   (with-temp-buffer
-    (clj-edn-print datum)
+    (parseedn-print datum)
     (buffer-substring-no-properties (point-min) (point-max))))
 
-(provide 'clj-edn)
+(provide 'parseedn)
 
-;;; clj-edn.el ends here
+;;; parseedn.el ends here

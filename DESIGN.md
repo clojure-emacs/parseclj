@@ -248,7 +248,7 @@ These are the choices that the edn.el library has made:
 
 ### Differences with EDN.el
 
-At the moment the `parseclj-edn-*` copy the parsing behavior of edn.el, *except* that the character literals `\newline`, `\return`, `\space`, and `\tab` are parsed to their character code (10, 13, 32, and 9 respectively), instead of to symbols.
+At the moment the `parseedn-*` copy the parsing behavior of edn.el, *except* that the character literals `\newline`, `\return`, `\space`, and `\tab` are parsed to their character code (10, 13, 32, and 9 respectively), instead of to symbols.
 
 ## AST
 
@@ -289,11 +289,11 @@ For each of these there can be the following functions
 Each of these have `-str` variant which instead works on strings. This yields a total potential API of:
 
 ```
-(defun parseclj-edn (&OPTIONAL tag-handler))
-(defun parseclj-edn-full (&OPTIONAL tag-handler))
+(defun parseedn (&OPTIONAL tag-handler))
+(defun parseedn-full (&OPTIONAL tag-handler))
 (defun clj-print-edn (edn))
-(defun parseclj-edn-str (string &OPTIONAL tag-handler))
-(defun parseclj-edn-full-str (string &OPTIONAL tag-handler))
+(defun parseedn-str (string &OPTIONAL tag-handler))
+(defun parseedn-full-str (string &OPTIONAL tag-handler))
 (defun clj-print-edn-str (edn))
 (defun parseclj-ast ())
 (defun parseclj-ast-full ())
