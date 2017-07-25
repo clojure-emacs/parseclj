@@ -61,20 +61,6 @@
           (parseclj--make-node type pos :children children)
           stack)))))
 
-(defun parseclj-ast-parse ()
-  "Parse Clojure code in buffer to AST.
-
-Parses code in the current buffer, starting from the current
-position of (point)."
-  (parseclj-parse #'parseclj-ast--reduce-leaf #'parseclj-ast--reduce-branch))
-
-(defun parseclj-ast-parse-str (s)
-  "Parse Clojure code in string S to AST."
-  (with-temp-buffer
-    (insert s)
-    (goto-char 1)
-    (parseclj-ast-parse)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Unparser
 
@@ -95,7 +81,7 @@ position of (point)."
     (parseclj-ast-unparse (car (a-get node :children)))))
 
 (defun parseclj-ast-unparse (node)
-  (if (parseclj--is-leaf? node)
+  (if (parseclj--leaf? node)
       (insert (alist-get ':form node))
     (let ((subnodes (alist-get ':children node)))
       (cl-case (a-get node ':node-type)

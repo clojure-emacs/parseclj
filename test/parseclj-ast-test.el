@@ -32,20 +32,20 @@
 
 (load "test/parseclj-test-data.el")
 
-(defmacro define-parseclj-ast-parse-tests ()
+(defmacro define-parseclj-parse-clojure-tests ()
   `(progn
      ,@(mapcar
         (lambda (pair)
           (let ((name (car pair))
                 (data (cdr pair)))
             (if (and (a-get data :source) (a-get data :ast))
-                (let ((test-name (intern (concat "parseclj-ast-parse:" name))))
+                (let ((test-name (intern (concat "parseclj-parse-clojure:" name))))
                   `(ert-deftest ,test-name ()
                      :tags '(parseclj-ast)
                      (with-temp-buffer
                        (insert ,(a-get data :source))
                        (goto-char 1)
-                       (should (a-equal (parseclj-ast-parse) ',(a-get data :ast)))))))))
+                       (should (a-equal (parseclj-parse-clojure) ',(a-get data :ast)))))))))
         parseclj-test-data)))
 
 (defmacro define-parseclj-ast-roundtrip-tests ()
@@ -58,11 +58,11 @@
                 (let ((test-name (intern (concat "parseclj-ast-rountrip:" name))))
                   `(ert-deftest ,test-name ()
                      :tags '(parseclj-ast-rountrip)
-                     (should (a-equal (parseclj-ast-parse-str (parseclj-ast-unparse-str ',(a-get data :ast))) ',(a-get data :ast))))))))
+                     (should (a-equal (parseclj-parse-clojure (parseclj-ast-unparse-str ',(a-get data :ast))) ',(a-get data :ast))))))))
         parseclj-test-data)))
 
 
 (define-parseclj-ast-roundtrip-tests)
-(define-parseclj-ast-parse-tests)
+(define-parseclj-parse-clojure-tests)
 
 ;;; parseclj-ast-test.el ends here
