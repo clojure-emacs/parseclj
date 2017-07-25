@@ -30,17 +30,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parser
 
-(defun parseclj--make-node (type position &rest kvs)
+(defun parseclj-ast--node (type position &rest kvs)
   (apply 'a-list ':node-type type ':position position kvs))
 
 (defun parseclj-ast--reduce-leaf (stack token)
-  (if (eq (parseclj-lex-token-type token) :whitespace)
+  (if (member (parseclj-lex-token-type token) '(:whitespace :comment))
       stack
     (cons
-     (parseclj--make-node (parseclj-lex-token-type token) (a-get token 'pos)
-                           ':form (a-get token 'form)
-                           ':value (parseclj--leaf-token-value token))
+     (parseclj-ast--node (parseclj-lex-token-type token)
+                         (a-get token 'pos)
+                         ':form (a-get token 'form)
+                         ':value (parseclj--leaf-token-value token))
      stack)))
+
+(defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token)
+  (let ((token-type (parseclj-lex-token-type token))
+        (top (car stack)))
+    (if (member token-type '(:whitespace :comment))
+        ;; merge consecutive whitespace or comment tokens
+        (if (eq token-type (a-get top :node-type))
+            (cons (a-update top :form #'concat (a-get token 'form))
+                  (cdr stack))
+          (cons (parseclj-ast--node (parseclj-lex-token-type token)
+                                    (a-get token 'pos)
+                                    ':form (a-get token 'form))
+                stack))
+      (parseclj-ast--reduce-leaf stack token))))
 
 (defun parseclj-ast--reduce-branch (stack opener-token children)
   (let* ((pos (a-get opener-token 'pos))
@@ -51,15 +66,22 @@
                  (:lbrace :map)
                  (t type))))
     (cl-case type
-      (:root (parseclj--make-node :root 0 :children children))
+      (:root (parseclj-ast--node :root 0 :children children))
       (:discard stack)
-      (:tag (list (parseclj--make-node :tag
-                                        pos
-                                        :tag (intern (substring (a-get opener-token 'form) 1))
-                                        :children children)))
+      (:tag (list (parseclj-ast--node :tag
+                                      pos
+                                      :tag (intern (substring (a-get opener-token 'form) 1))
+                                      :children children)))
       (t (cons
-          (parseclj--make-node type pos :children children)
+          (parseclj-ast--node type pos :children children)
           stack)))))
+
+(defun parseclj-ast--reduce-branch-with-lexical-preservation (&rest args)
+  (let ((node (apply #'parseclj-ast--reduce-branch args)))
+    (cl-list*
+     (car node) ;; make sure :node-type remains the first element in the list
+     '(:lexical-preservation . t)
+     (cdr node))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Unparser

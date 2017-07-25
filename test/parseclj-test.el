@@ -30,8 +30,39 @@
 (require 'ert)
 (require 'parseclj)
 
-;; needs testing of individual functions. all testing now is at the top level
-;; through parse/unparse
+(ert-deftest parseclj-parse-clojure-with-lexical-preservation-test ()
+  (should (equal
+           (parseclj-parse-clojure ";; foo\nbar")
+           '((:node-type . :root)
+             (:position . 0)
+             (:children ((:node-type . :symbol)
+                         (:position . 8)
+                         (:form . "bar")
+                         (:value . bar))))))
+  (should (equal
+           (parseclj-parse-clojure ";; foo\nbar" :lexical-preservation t)
+           '((:node-type . :root)
+             (:lexical-preservation . t)
+             (:position . 0)
+             (:children ((:node-type . :comment)
+                         (:position . 1)
+                         (:form . ";; foo\n"))
+                        ((:node-type . :symbol)
+                         (:position . 8)
+                         (:form . "bar")
+                         (:value . bar))))))
+  (should (equal
+           (parseclj-parse-clojure ";; foo\n;;baz\nbar" :lexical-preservation t)
+           '((:node-type . :root)
+             (:lexical-preservation . t)
+             (:position . 0)
+             (:children ((:node-type . :comment)
+                         (:position . 1)
+                         (:form . ";; foo\n;;baz\n"))
+                        ((:node-type . :symbol)
+                         (:position . 14)
+                         (:form . "bar")
+                         (:value . bar)))))))
 
 (provide 'parseclj-test)
 

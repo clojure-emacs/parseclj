@@ -179,7 +179,7 @@ functions.
           (setf stack (funcall reduce-branch (cddr stack) lookup (list top))))))
 
     ;; reduce root
-    (setf stack (funcall reduce-branch stack '((type . :root) (pos . 1)) stack))
+    (setf stack (funcall reduce-branch stack '((type . :root) (pos . 1)) (reverse stack)))
     ;; (message "RESULT: %S" stack)
     stack))
 
@@ -204,9 +204,15 @@ key-value pairs to specify parsing options.
         (insert (car string-and-options))
         (goto-char 1)
         (apply 'parseclj-parse-clojure (cdr string-and-options)))
-    (parseclj-parse #'parseclj-ast--reduce-leaf
-                    #'parseclj-ast--reduce-branch
-                    (apply 'a-list string-and-options))))
+    (let* ((options (apply 'a-list string-and-options))
+           (lexical? (a-get options :lexical-preservation)))
+      (parseclj-parse (if lexical?
+                          #'parseclj-ast--reduce-leaf-with-lexical-preservation
+                        #'parseclj-ast--reduce-leaf)
+                      (if lexical?
+                          #'parseclj-ast--reduce-branch-with-lexical-preservation
+                        #'parseclj-ast--reduce-branch)
+                      options))))
 
 
 (provide 'parseclj)
