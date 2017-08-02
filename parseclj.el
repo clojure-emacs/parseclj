@@ -36,6 +36,7 @@
 (require 'parseclj-lex)
 (require 'parseedn)
 (require 'parseclj-ast)
+(require 'parseclj-unparse)
 
 (defvar parseclj--leaf-tokens '(:whitespace
                                 :comment
