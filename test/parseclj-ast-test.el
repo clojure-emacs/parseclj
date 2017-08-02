@@ -58,7 +58,7 @@
                 (let ((test-name (intern (concat "parseclj-ast-rountrip:" name))))
                   `(ert-deftest ,test-name ()
                      :tags '(parseclj-ast-rountrip)
-                     (should (a-equal (parseclj-parse-clojure (parseclj-ast-unparse-str ',(a-get data :ast))) ',(a-get data :ast))))))))
+                     (should (a-equal (parseclj-parse-clojure (parseclj-unparse-clojure-to-string ',(a-get data :ast))) ',(a-get data :ast))))))))
         parseclj-test-data)))
 
 

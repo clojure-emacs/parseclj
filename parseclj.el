@@ -205,7 +205,8 @@ functions.
                          (a-get token :pos)
                          (parseclj-lex-token-type token))))
 
-    (funcall reduce-branch stack '((type . :root) (pos . 1)) (reverse stack))))
+    (car (funcall reduce-branch nil (parseclj-lex-token :root "" 1)
+                  (reverse stack)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Top level API
@@ -238,6 +239,31 @@ key-value pairs to specify parsing options.
                         #'parseclj-ast--reduce-branch)
                       options))))
 
+(defun parseclj-unparse-clojure (ast)
+  "Parse Clojure AST to source code.
+
+Given an abstract syntax tree AST (as returned by
+parseclj-parse-clojure), turn it back into source code, and
+insert it into the current buffer."
+  (if (parseclj-ast-leaf-node? ast)
+      (insert (a-get ast :form))
+    (cl-case (parseclj-ast-node-type ast)
+      (:root (parseclj-unparse--collection ast "" ""))
+      (:list (parseclj-unparse--collection ast "(" ")"))
+      (:vector (parseclj-unparse--collection ast "[" "]"))
+      (:set (parseclj-unparse--collection ast "#{" "}"))
+      (:map (parseclj-unparse--collection ast "{" "}"))
+      (:tag (parseclj-unparse--tag ast)))))
+
+(defun parseclj-unparse-clojure-to-string (ast)
+  "Parse Clojure AST to a source code string.
+
+Given an abstract syntax tree AST (as returned by
+parseclj-parse-clojure), turn it back into source code, and
+return it as a string"
+  (with-temp-buffer
+    (parseclj-unparse-clojure ast)
+    (buffer-substring-no-properties (point-min) (point-max))))
 
 (provide 'parseclj)
 

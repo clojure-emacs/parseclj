@@ -47,12 +47,13 @@ handlers as an optional argument to the reader functions.")
     (cons (parseclj--leaf-token-value token) stack)))
 
 (defun parseedn-reduce-branch (tag-readers)
-  (lambda (stack opener-token children)
-    (let ((token-type (parseclj-lex-token-type opener-token)))
-      (if (member token-type '(:root :discard))
+  (lambda (stack opening-token children)
+    (let ((token-type (parseclj-lex-token-type opening-token)))
+      (if (eq token-type :discard)
           stack
         (cons
          (cl-case token-type
+           (:root children)
            (:lparen children)
            (:lbracket (apply #'vector children))
            (:set (list 'edn-set children))

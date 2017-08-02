@@ -84,58 +84,25 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
                  (:lbrace :map)
                  (t type))))
     (cl-case type
-      (:root (parseclj-ast--node :root 0 :children children))
+      (:root (cons (parseclj-ast-node :root 0 :children children) stack))
       (:discard stack)
-      (:tag (list (parseclj-ast--node :tag
-                                      pos
-                                      :tag (intern (substring (a-get opener-token 'form) 1))
-                                      :children children)))
+      (:tag (list (parseclj-ast-node :tag
+                                     pos
+                                     :tag (intern (substring (a-get opener-token :form) 1))
+                                     :children children)))
       (t (cons
-          (parseclj-ast--node type pos :children children)
+          (parseclj-ast-node type pos :children children)
           stack)))))
 
 (defun parseclj-ast--reduce-branch-with-lexical-preservation (&rest args)
-  (let ((node (apply #'parseclj-ast--reduce-branch args)))
-    (cl-list*
-     (car node) ;; make sure :node-type remains the first element in the list
-     '(:lexical-preservation . t)
-     (cdr node))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Unparser
-
-(defun parseclj-ast-unparse-collection (nodes ld rd)
-  (insert ld)
-  (when-let (node (car nodes))
-    (parseclj-ast-unparse node))
-  (seq-doseq (node (cdr nodes))
-    (insert " ")
-    (parseclj-ast-unparse node))
-  (insert rd))
-
-(defun parseclj-ast-unparse-tag (node)
-  (progn
-    (insert "#")
-    (insert (symbol-name (a-get node :tag)))
-    (insert " ")
-    (parseclj-ast-unparse (car (a-get node :children)))))
-
-(defun parseclj-ast-unparse (node)
-  (if (parseclj--leaf? node)
-      (insert (alist-get ':form node))
-    (let ((subnodes (alist-get ':children node)))
-      (cl-case (a-get node ':node-type)
-        (:root (parseclj-ast-unparse-collection subnodes "" ""))
-        (:list (parseclj-ast-unparse-collection subnodes "(" ")"))
-        (:vector (parseclj-ast-unparse-collection subnodes "[" "]"))
-        (:set (parseclj-ast-unparse-collection subnodes "#{" "}"))
-        (:map (parseclj-ast-unparse-collection subnodes "{" "}"))
-        (:tag (parseclj-ast-unparse-tag node))))))
-
-(defun parseclj-ast-unparse-str (data)
-  (with-temp-buffer
-    (parseclj-ast-unparse data)
-    (buffer-substring-no-properties (point-min) (point-max))))
+  (let* ((stack (apply #'parseclj-ast--reduce-branch args))
+         (top (car stack)))
+    (if (parseclj-ast-node? top)
+        (cons (cl-list* (car top) ;; make sure :node-type remains the first element in the list
+                        '(:lexical-preservation . t)
+                        (cdr top))
+              (cdr stack))
+      stack)))
 
 (provide 'parseclj-ast)
 
