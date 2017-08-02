@@ -116,8 +116,8 @@ Takes a FORMAT string and optional ARGS to be passed to
 can be handled with `condition-case'."
   (signal 'parseclj-parse-error (list (apply #'format-message format args))))
 
-(defun parseclj--find-opener (stack closer-token)
-  (cl-case (parseclj-lex-token-type closer-token)
+(defun parseclj--find-opening-token (stack closing-token)
+  (cl-case (parseclj-lex-token-type closing-token)
     (:rparen :lparen)
     (:rbracket :lbracket)
     (:rbrace (parseclj-lex-token-type
@@ -126,15 +126,15 @@ can be handled with `condition-case'."
                                   '(:lbrace :set)))
                         stack)))))
 
-(defun parseclj--reduce-coll (stack closer-token reduce-branch options)
+(defun parseclj--reduce-coll (stack closing-token reduce-branch options)
   "Reduce collection based on the top of the stack"
-  (let ((opener-type (parseclj--find-opener stack closer-token))
+  (let ((opening-token-type (parseclj--find-opening-token stack closing-token))
         (fail-fast (a-get options :fail-fast t))
         (coll nil))
-    (while (and stack (not (eq (parseclj-lex-token-type (car stack)) opener-type)))
+    (while (and stack (not (eq (parseclj-lex-token-type (car stack)) opening-token-type)))
       (push (pop stack) coll))
 
-    (if (eq (parseclj-lex-token-type (car stack)) opener-type)
+    (if (eq (parseclj-lex-token-type (car stack)) opening-token-type)
         (let ((node (pop stack)))
           (when fail-fast
             (when-let ((token (seq-find #'parseclj-lex-token? coll)))
@@ -145,8 +145,8 @@ can be handled with `condition-case'."
 
       (if fail-fast
           (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
-                           (a-get closer-token :pos)
-                           (parseclj-lex-token-type closer-token))
+                           (a-get closing-token :pos)
+                           (parseclj-lex-token-type closing-token))
         ;; Unwound the stack without finding a matching paren: return the original stack and continue parsing
         (reverse coll)))))
 

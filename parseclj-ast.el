@@ -75,9 +75,9 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
                 stack))
       (parseclj-ast--reduce-leaf stack token))))
 
-(defun parseclj-ast--reduce-branch (stack opener-token children)
-  (let* ((pos (a-get opener-token :pos))
-         (type (parseclj-lex-token-type opener-token))
+(defun parseclj-ast--reduce-branch (stack opening-token children)
+  (let* ((pos (a-get opening-token :pos))
+         (type (parseclj-lex-token-type opening-token))
          (type (cl-case type
                  (:lparen :list)
                  (:lbracket :vector)
@@ -88,7 +88,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
       (:discard stack)
       (:tag (list (parseclj-ast-node :tag
                                      pos
-                                     :tag (intern (substring (a-get opener-token :form) 1))
+                                     :tag (intern (substring (a-get opening-token :form) 1))
                                      :children children)))
       (t (cons
           (parseclj-ast-node type pos :children children)
