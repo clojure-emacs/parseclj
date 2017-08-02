@@ -47,16 +47,12 @@
                                 :keyword
                                 :string
                                 :character)
-  "Tokens that represent leaf nodes in the AST.")
+  "Types of tokens that represent leaf nodes in the AST.")
 
-(defvar parseclj--closer-tokens '(:rparen
-                                  :rbracket
-                                  :rbrace)
-  "Tokens that represent closing of an AST branch.")
-
-(defun parseclj--leaf? (node)
-  "Return `t' if the given ast NODE is a leaf node."
-  (member (a-get node ':node-type) parseclj--leaf-tokens))
+(defvar parseclj--closing-tokens '(:rparen
+                                   :rbracket
+                                   :rbrace)
+  "Types of tokens that mark the end of a non-atomic form.")
 
 ;; The EDN spec is not clear about wether \u0123 and \o012 are supported in
 ;; strings. They are described as character literals, but not as string escape
@@ -99,14 +95,14 @@
 
 (defun parseclj--leaf-token-value (token)
   (cl-case (parseclj-lex-token-type token)
-    (:number (string-to-number (alist-get 'form token)))
+    (:number (string-to-number (alist-get :form token)))
     (:nil nil)
     (:true t)
     (:false nil)
-    (:symbol (intern (alist-get 'form token)))
-    (:keyword (intern (alist-get 'form token)))
-    (:string (parseclj--string (alist-get 'form token)))
-    (:character (parseclj--character (alist-get 'form token)))))
+    (:symbol (intern (alist-get :form token)))
+    (:keyword (intern (alist-get :form token)))
+    (:string (parseclj--string (alist-get :form token)))
+    (:character (parseclj--character (alist-get :form token)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Shift-Reduce Parser
@@ -125,7 +121,10 @@ can be handled with `condition-case'."
     (:rparen :lparen)
     (:rbracket :lbracket)
     (:rbrace (parseclj-lex-token-type
-              (seq-find (lambda (token) (member (parseclj-lex-token-type token) '(:lbrace :set))) stack)))))
+              (seq-find (lambda (token)
+                          (member (parseclj-lex-token-type token)
+                                  '(:lbrace :set)))
+                        stack)))))
 
 (defun parseclj--reduce-coll (stack closer-token reduce-branch options)
   "Reduce collection based on the top of the stack"
@@ -140,13 +139,13 @@ can be handled with `condition-case'."
           (when fail-fast
             (when-let ((token (seq-find #'parseclj-lex-token? coll)))
               (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
-                               (a-get token 'pos)
+                               (a-get token :pos)
                                (parseclj-lex-token-type token))))
           (funcall reduce-branch stack node coll))
 
       (if fail-fast
           (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
-                           (a-get closer-token 'pos)
+                           (a-get closer-token :pos)
                            (parseclj-lex-token-type closer-token))
         ;; Unwound the stack without finding a matching paren: return the original stack and continue parsing
         (reverse coll)))))
@@ -183,11 +182,14 @@ functions.
       ;; (message "TOKEN: %S\n" token)
 
       ;; Reduce based on the top item on the stack (collections)
-      (let ((token-type (parseclj-lex-token-type token)))
-        (cond
-         ((member token-type parseclj--leaf-tokens) (setf stack (funcall reduce-leaf stack token)))
-         ((member token-type parseclj--closer-tokens) (setf stack (parseclj--reduce-coll stack token reduce-branch options)))
-         (t (push token stack))))
+      (cond
+       ((parseclj-lex-leaf-token? token)
+        (setf stack (funcall reduce-leaf stack token)))
+
+       ((parseclj-lex-closing-token? token)
+        (setf stack (parseclj--reduce-coll stack token reduce-branch options)))
+
+       (t (push token stack)))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
       (seq-let [top lookup] stack
@@ -200,7 +202,7 @@ functions.
     (when fail-fast
       (when-let ((token (seq-find #'parseclj-lex-token? stack)))
         (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
-                         (a-get token 'pos)
+                         (a-get token :pos)
                          (parseclj-lex-token-type token))))
 
     (funcall reduce-branch stack '((type . :root) (pos . 1)) (reverse stack))))

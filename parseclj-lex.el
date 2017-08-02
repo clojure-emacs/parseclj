@@ -25,26 +25,39 @@
 
 ;; A reader for EDN data files and parser for Clojure source files.
 
-(defun parseclj-lex-token (type form pos &rest args)
-  `((type . ,type)
-    (form . ,form)
-    (pos  . ,pos)
-    ,@(mapcar (lambda (pair)
-                (cons (car pair) (cadr pair)))
-              (seq-partition args 2))))
+;;; Code
+
+(defun parseclj-lex-token (type form pos &rest attributes)
+  "Create a lexer token with the specified attributes.
+
+Tokens at a mimimum have these attributes
+- TYPE: the type of token, like :whitespace or :lparen
+- FORM: the source form, a string
+- POS: the position in the input, starts from 1 (like point)
+
+Other ATTRIBUTES can be given as a flat list of key-value pairs."
+  (apply 'a-list :token-type type :form form :pos pos attributes))
 
 (defun parseclj-lex-token? (token)
-  (and (consp token) (consp (car token)) (eq 'type (caar token))))
+  "Is the given TOKEN a parseclj-lex TOKEN.
+
+A token is an association list with :token-type as its first key. "
+  (and (consp token)
+       (consp (car token))
+       (eq :token-type (caar token))))
 
 (defun parseclj-lex-token-type (token)
-  (and (listp token)
-       (cdr (assq 'type token))))
+  "Get the type of TOKEN."
+  (and (consp token)
+       (cdr (assq :token-type token))))
 
-(defun parseclj-lex-token? (token)
-  (and (listp token)
-       (consp (car token))
-       (eq 'type (caar token))
-       (not (listp (cdar token)))))
+(defun parseclj-lex-leaf-token? (token)
+  "Return `t' if the given ast TOKEN is a leaf node."
+  (member (parseclj-lex-token-type token) parseclj--leaf-tokens))
+
+(defun parseclj-lex-closing-token? (token)
+  "Return `t' if the given ast TOKEN is a closing toking."
+  (member (parseclj-lex-token-type token) parseclj--closing-tokens))
 
 (defun parseclj-lex-at-whitespace? ()
   (let ((char (char-after (point))))
@@ -106,7 +119,7 @@
             (parseclj-lex-token :lex-error
                            (buffer-substring-no-properties pos (point))
                            pos
-                           'error-type :invalid-number-format))
+                           :error-type :invalid-number-format))
 
         (parseclj-lex-token :number
                        (buffer-substring-no-properties pos (point))
@@ -214,7 +227,7 @@ behavior."
     (if (equal (char-after (point)) ?:) ;; three colons in a row => lex-error
         (progn
           (right-char)
-          (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-keyword))
+          (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos :error-type :invalid-keyword))
       (progn
         (while (or (parseclj-lex-symbol-rest? (char-after (point)))
                    (equal (char-after (point)) ?#))
@@ -296,7 +309,7 @@ behavior."
             (while (not (or (parseclj-lex-at-whitespace?)
                             (parseclj-lex-at-eof?)))
               (right-char))
-            (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos 'error-type :invalid-hashtag-dispatcher)))))
+            (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos :error-type :invalid-hashtag-dispatcher)))))
 
        (t
         (concat ":(" (char-to-string char)))))))

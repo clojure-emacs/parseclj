@@ -27,20 +27,38 @@
 
 ;;; Code:
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Parser
+;; AST helper functions
 
-(defun parseclj-ast--node (type position &rest kvs)
-  (apply 'a-list ':node-type type ':position position kvs))
+(defun parseclj-ast-node (type position &rest attributes)
+  "Create an AST node with given TYPE and POSITION.
+
+Other ATTRIBUTES can be given as a flat list of key-value pairs. "
+  (apply 'a-list :node-type type :position position attributes))
+
+(defun parseclj-ast-node? (node)
+  "Return `t' if the given NODE is a Clojure AST node."
+  (and (consp node)
+       (consp (car node))
+       (eq :node-type (caar node))))
+
+(defun parseclj-ast-node-type (node)
+  "Return the type of the AST node NODE."
+  (a-get node :node-type))
+
+(defun parseclj-ast-leaf-node? (node)
+  "Return `t' if the given ast NODE is a leaf node."
+  (member (parseclj-ast-node-type node) parseclj--leaf-tokens))
+
+;; Parse/reduce strategy functions
 
 (defun parseclj-ast--reduce-leaf (stack token)
   (if (member (parseclj-lex-token-type token) '(:whitespace :comment))
       stack
     (cons
-     (parseclj-ast--node (parseclj-lex-token-type token)
-                         (a-get token 'pos)
-                         ':form (a-get token 'form)
-                         ':value (parseclj--leaf-token-value token))
+     (parseclj-ast-node (parseclj-lex-token-type token)
+                        (a-get token :pos)
+                        :form (a-get token :form)
+                        :value (parseclj--leaf-token-value token))
      stack)))
 
 (defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token)
@@ -49,16 +67,16 @@
     (if (member token-type '(:whitespace :comment))
         ;; merge consecutive whitespace or comment tokens
         (if (eq token-type (a-get top :node-type))
-            (cons (a-update top :form #'concat (a-get token 'form))
+            (cons (a-update top :form #'concat (a-get token :form))
                   (cdr stack))
-          (cons (parseclj-ast--node (parseclj-lex-token-type token)
-                                    (a-get token 'pos)
-                                    ':form (a-get token 'form))
+          (cons (parseclj-ast-node (parseclj-lex-token-type token)
+                                   (a-get token :pos)
+                                   :form (a-get token :form))
                 stack))
       (parseclj-ast--reduce-leaf stack token))))
 
 (defun parseclj-ast--reduce-branch (stack opener-token children)
-  (let* ((pos (a-get opener-token 'pos))
+  (let* ((pos (a-get opener-token :pos))
          (type (parseclj-lex-token-type opener-token))
          (type (cl-case type
                  (:lparen :list)

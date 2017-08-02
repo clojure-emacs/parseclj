@@ -34,73 +34,73 @@
   (with-temp-buffer
     (insert "()")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :lparen) (form . "(") (pos . 1))))
-    (should (equal (parseclj-lex-next) '((type . :rparen) (form . ")") (pos . 2))))
-    (should (equal (parseclj-lex-next) '((type . :eof) (form . nil) (pos . 3)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :lparen) (:form . "(") (:pos . 1))))
+    (should (equal (parseclj-lex-next) '((:token-type . :rparen) (:form . ")") (:pos . 2))))
+    (should (equal (parseclj-lex-next) '((:token-type . :eof) (:form . nil) (:pos . 3)))))
 
   (with-temp-buffer
     (insert "123")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :number)
-                                    (form . "123")
-                                    (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :number)
+                                         (:form . "123")
+                                         (:pos . 1)))))
 
   (with-temp-buffer
     (insert "123e34M")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :number)
-                                    (form . "123e34M")
-                                    (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :number)
+                                         (:form . "123e34M")
+                                         (:pos . 1)))))
 
   (with-temp-buffer
     (insert "123x")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :lex-error "123x" 1 'error-type :invalid-number-format))))
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :lex-error "123x" 1 :error-type :invalid-number-format))))
 
   (with-temp-buffer
     (insert " \t  \n")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :whitespace) (form . " \t  \n") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :whitespace) (:form . " \t  \n") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "nil")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :nil) (form . "nil") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :nil) (:form . "nil") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "true")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :true) (form . "true") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :true) (:form . "true") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "false")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :false) (form . "false") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :false) (:form . "false") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "hello-world")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :symbol) (form . "hello-world") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :symbol) (:form . "hello-world") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "-hello-world")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :symbol) (form . "-hello-world") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :symbol) (:form . "-hello-world") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "foo#")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :symbol) (form . "foo#") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :symbol) (:form . "foo#") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "#inst")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :tag) (form . "#inst") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :tag) (:form . "#inst") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "#qualified/tag")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :tag) (form . "#qualified/tag") (pos . 1)))))
+    (should (equal (parseclj-lex-next) '((:token-type . :tag) (:form . "#qualified/tag") (:pos . 1)))))
 
   (with-temp-buffer
     (insert "\\newline\\return\\space\\tab\\a\\b\\c")
@@ -153,7 +153,7 @@
   (with-temp-buffer
     (insert ":::hello-world")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :lex-error ":::" 1 'error-type :invalid-keyword))))
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :lex-error ":::" 1 :error-type :invalid-keyword))))
 
   (with-temp-buffer
     (insert "[123]")
@@ -212,9 +212,9 @@
 
 (ert-deftest parseclj-lex-test-token ()
   (should (equal (parseclj-lex-token :whitespace ",,," 10)
-                 '((type . :whitespace)
-                   (form . ",,,")
-                   (pos . 10)))))
+                 '((:token-type . :whitespace)
+                   (:form . ",,,")
+                   (:pos . 10)))))
 
 (ert-deftest parseclj-lex-test-digit? ()
   (should (equal (parseclj-lex-digit? ?0) t))
@@ -251,17 +251,20 @@
   (with-temp-buffer
     (insert "#.not-a-tag")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :lex-error) (form . "#.not-a-tag") (pos . 1) (error-type . :invalid-hashtag-dispatcher)))))
+    (should (equal (parseclj-lex-next)
+                   (parseclj-lex-token :lex-error "#.not-a-tag" 1 :error-type :invalid-hashtag-dispatcher))))
 
   (with-temp-buffer
     (insert "#-not-a-tag")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :lex-error) (form . "#-not-a-tag") (pos . 1) (error-type . :invalid-hashtag-dispatcher)))))
+    (should (equal (parseclj-lex-next)
+                   (parseclj-lex-token :lex-error "#-not-a-tag" 1 :error-type :invalid-hashtag-dispatcher))))
 
   (with-temp-buffer
     (insert "#+not-a-tag")
     (goto-char 1)
-    (should (equal (parseclj-lex-next) '((type . :lex-error) (form . "#+not-a-tag") (pos . 1) (error-type . :invalid-hashtag-dispatcher))))))
+    (should (equal (parseclj-lex-next)
+                   (parseclj-lex-token :lex-error "#+not-a-tag" 1 :error-type :invalid-hashtag-dispatcher)))))
 
 (ert-deftest parseclj-lex-test-string ()
   (with-temp-buffer

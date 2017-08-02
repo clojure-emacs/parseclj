@@ -138,7 +138,7 @@
                                                       ((:node-type . :map)
                                                        (:position . 7)
                                                        (:children ((:node-type . :number) (:position . 8) (:form . "3") (:value . 3))
-                                                                  ((type . :lparen) (form . "(") (pos . 10))
+                                                                  ((:token-type . :lparen) (:form . "(") (:pos . 10))
                                                                   ((:node-type . :number) (:position . 12) (:form . "4") (:value . 4))))))))))))
 
   ;; TODO: uneven map forms
