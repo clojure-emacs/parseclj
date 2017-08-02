@@ -149,7 +149,7 @@ can be handled with `condition-case'."
           ;; all good, call the reducer so it can return an updated stack with a
           ;; new node at the top.
           (let ((opening-token (pop stack)))
-            (funcall reduce-branch stack opening-token collection)))
+            (funcall reduce-branch stack opening-token collection options)))
 
       ;; Unwound the stack without finding a matching paren: either bail early
       ;; or return the original stack and continue parsing
@@ -257,7 +257,7 @@ functions. Additionally the following options are recognized
       ;; Reduce based on the top item on the stack (collections)
       (cond
        ((parseclj-lex-leaf-token? token)
-        (setf stack (funcall reduce-leaf stack token)))
+        (setf stack (funcall reduce-leaf stack token options)))
 
        ((parseclj-lex-closing-token? token)
         (setf stack (parseclj--reduce-coll stack token reduce-branch options)))
@@ -273,7 +273,7 @@ functions. Additionally the following options are recognized
           ;; (message "  - STACK %S" stack)
           ;; (message "  - OPENING_TOKEN %S" opening-token)
           ;; (message "  - TOP_VALUE %S\n" top-value)
-          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value)))))
+          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value) options))))
 
       (setq token (parseclj-lex-next)))
 
@@ -285,7 +285,8 @@ functions. Additionally the following options are recognized
                          (parseclj-lex-token-type token))))
 
     (car (funcall reduce-branch nil (parseclj-lex-token :root "" 1)
-                  (reverse stack)))))
+                  (reverse stack)
+                  options))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Top level API

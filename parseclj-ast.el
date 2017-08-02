@@ -51,7 +51,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
 
 ;; Parse/reduce strategy functions
 
-(defun parseclj-ast--reduce-leaf (stack token)
+(defun parseclj-ast--reduce-leaf (stack token options)
   (if (member (parseclj-lex-token-type token) '(:whitespace :comment))
       stack
     (cons
@@ -61,7 +61,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
                         :value (parseclj--leaf-token-value token))
      stack)))
 
-(defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token)
+(defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token options)
   (let ((token-type (parseclj-lex-token-type token))
         (top (car stack)))
     (if (member token-type '(:whitespace :comment))
@@ -73,9 +73,9 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
                                    (a-get token :pos)
                                    :form (a-get token :form))
                 stack))
-      (parseclj-ast--reduce-leaf stack token))))
+      (parseclj-ast--reduce-leaf stack token options))))
 
-(defun parseclj-ast--reduce-branch (stack opening-token children)
+(defun parseclj-ast--reduce-branch (stack opening-token children options)
   (let* ((pos (a-get opening-token :pos))
          (type (parseclj-lex-token-type opening-token))
          (type (cl-case type
@@ -94,10 +94,10 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
           (parseclj-ast-node type pos :children children)
           stack)))))
 
-(defun parseclj-ast--reduce-branch-with-lexical-preservation (stack opening-token children)
+(defun parseclj-ast--reduce-branch-with-lexical-preservation (stack opening-token children options)
   (if (eq :discard (parseclj-lex-token-type opening-token))
       (cons (parseclj-ast-node :discard (a-get opening-token :pos) :children children) stack)
-    (let* ((stack (funcall #'parseclj-ast--reduce-branch stack opening-token children))
+    (let* ((stack (funcall #'parseclj-ast--reduce-branch stack opening-token children options))
            (top (car stack)))
       (if (parseclj-ast-node? top)
           (cons (cl-list* (car top) ;; make sure :node-type remains the first element in the list

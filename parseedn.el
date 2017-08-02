@@ -41,38 +41,39 @@ is not recommended you change this variable, as this globally
 changes the behavior of the EDN reader. Instead pass your own
 handlers as an optional argument to the reader functions.")
 
-(defun parseedn-reduce-leaf (stack token)
+(defun parseedn-reduce-leaf (stack token options)
   (if (member (parseclj-lex-token-type token) (list :whitespace :comment))
       stack
     (cons (parseclj--leaf-token-value token) stack)))
 
-(defun parseedn-reduce-branch (tag-readers)
-  (lambda (stack opening-token children)
-    (let ((token-type (parseclj-lex-token-type opening-token)))
-      (if (eq token-type :discard)
-          stack
-        (cons
-         (cl-case token-type
-           (:root children)
-           (:lparen children)
-           (:lbracket (apply #'vector children))
-           (:set (list 'edn-set children))
-           (:lbrace (let* ((kvs (seq-partition children 2))
-                           (hash-map (make-hash-table :test 'equal :size (length kvs))))
-                      (seq-do (lambda (pair)
-                                (puthash (car pair) (cadr pair) hash-map))
-                              kvs)
-                      hash-map))
-           (:tag (let* ((tag (intern (substring (a-get opening-token :form) 1)))
-                        (reader (a-get tag-readers tag :missing)))
-                   (when (eq :missing reader)
-                     (user-error "No reader for tag #%S in %S" tag (a-keys tag-readers)))
-                   (funcall reader (car children)))))
-         stack)))))
+(defun parseedn-reduce-branch (stack opening-token children options)
+  (let ((tag-readers (a-merge parseedn-default-tag-readers (a-get options :tag-readers)))
+        (token-type (parseclj-lex-token-type opening-token)))
+    (if (eq token-type :discard)
+        stack
+      (cons
+       (cl-case token-type
+         (:root children)
+         (:lparen children)
+         (:lbracket (apply #'vector children))
+         (:set (list 'edn-set children))
+         (:lbrace (let* ((kvs (seq-partition children 2))
+                         (hash-map (make-hash-table :test 'equal :size (length kvs))))
+                    (seq-do (lambda (pair)
+                              (puthash (car pair) (cadr pair) hash-map))
+                            kvs)
+                    hash-map))
+         (:tag (let* ((tag (intern (substring (a-get opening-token :form) 1)))
+                      (reader (a-get tag-readers tag :missing)))
+                 (when (eq :missing reader)
+                   (user-error "No reader for tag #%S in %S" tag (a-keys tag-readers)))
+                 (funcall reader (car children)))))
+       stack))))
 
 (defun parseedn-read (&optional tag-readers)
   (parseclj-parse #'parseedn-reduce-leaf
-                    (parseedn-reduce-branch (a-merge parseedn-default-tag-readers tag-readers))))
+                  #'parseedn-reduce-branch
+                  (a-list :tag-readers tag-readers)))
 
 (defun parseedn-read-str (s &optional tag-readers)
   (with-temp-buffer
