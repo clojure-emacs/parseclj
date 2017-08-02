@@ -194,7 +194,75 @@
                         ((:node-type . :true)
                          (:position . 12)
                          (:form . "true")
-                         (:value . t)))))))
+                         (:value . t))))))
+
+  (should (equal
+           (parseclj-parse-clojure "#_#_4 5" :lexical-preservation t)
+           '((:node-type . :root)
+             (:lexical-preservation . t)
+             (:position . 1)
+             (:children ((:node-type . :discard)
+                         (:position . 1)
+                         (:children ((:node-type . :discard)
+                                     (:position . 3)
+                                     (:children ((:node-type . :number) (:position . 5) (:form . "4") (:value . 4))))
+                                    ((:node-type . :whitespace) (:position . 6) (:form . " "))
+                                    ((:node-type . :number) (:position . 7) (:form . "5") (:value . 5)))))))))
+
+(ert-deftest parseclj--take-token-test ()
+  (should (equal
+           (parseclj--take-token
+            (list (parseclj-ast-node :whitespace 10)
+                  (parseclj-ast-node :comment 20)
+                  (parseclj-lex-token :discard "#_" 30)
+                  (parseclj-ast-node :comment 20))
+            (lambda (e)
+              (and (parseclj-ast-node? e)
+                   (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))
+            '(:discard))
+           '(((:token-type . :discard) (:form . "#_") (:pos . 30))
+             ((:node-type . :comment) (:position . 20))
+             ((:node-type . :whitespace) (:position . 10)))))
+
+  (should (equal
+           (parseclj--take-token
+            (list (parseclj-ast-node :whitespace 10)
+                  (parseclj-ast-node :number 20)
+                  (parseclj-lex-token :discard "#_" 30)
+                  (parseclj-ast-node :comment 20))
+            (lambda (e)
+              (and (parseclj-ast-node? e)
+                   (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))
+            '(:discard))
+           nil)))
+
+(ert-deftest parseclj--take-value-test ()
+  (let ((stack '(((:node-type . :number) (:position . 3) (:form . "4") (:value . 4))
+                 ((:token-type . :discard) (:form . "#_") (:pos . 1))))
+        (value-p (lambda (e)
+                   (and (parseclj-ast-node? e)
+                        (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))))
+    (should (equal (parseclj--take-value stack value-p)
+                   '(((:node-type . :number) (:position . 3) (:form . "4") (:value . 4)))))
+
+    (let* ((top-value (parseclj--take-value stack value-p))
+           (opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
+           (new-stack (nthcdr (+ (length top-value) (length opening-token)) stack)))
+
+      (should (equal top-value '(((:node-type . :number) (:position . 3) (:form . "4") (:value . 4)))))
+      (should (equal opening-token '(((:token-type . :discard) (:form . "#_") (:pos . 1)))))
+      (should (equal new-stack nil))))
+
+  (let ((stack '(((:node-type . :whitespace) (:position . 3) (:form . " "))
+                 ((:token-type . :discard) (:form . "#_") (:pos . 1))))
+        (value-p (lambda (e)
+                   (and (parseclj-ast-node? e)
+                        (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))))
+
+    (let* ((top-value (parseclj--take-value stack value-p))
+           (opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
+           (new-stack (nthcdr (+ (length top-value) (length opening-token)) stack)))
+      top-value)))
 
 (provide 'parseclj-test)
 

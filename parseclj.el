@@ -130,25 +130,85 @@ can be handled with `condition-case'."
   "Reduce collection based on the top of the stack"
   (let ((opening-token-type (parseclj--find-opening-token stack closing-token))
         (fail-fast (a-get options :fail-fast t))
-        (coll nil))
-    (while (and stack (not (eq (parseclj-lex-token-type (car stack)) opening-token-type)))
-      (push (pop stack) coll))
+        (collection nil))
 
+    ;; unwind the stack until opening-token-type is found, adding to collection
+    (while (and stack (not (eq (parseclj-lex-token-type (car stack)) opening-token-type)))
+      (push (pop stack) collection))
+
+    ;; did we find the right token?
     (if (eq (parseclj-lex-token-type (car stack)) opening-token-type)
-        (let ((node (pop stack)))
+        (progn
           (when fail-fast
-            (when-let ((token (seq-find #'parseclj-lex-token? coll)))
+            ;; any unreduced tokens left: bail early
+            (when-let ((token (seq-find #'parseclj-lex-token? collection)))
               (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
                                (a-get token :pos)
                                (parseclj-lex-token-type token))))
-          (funcall reduce-branch stack node coll))
 
+          ;; all good, call the reducer so it can return an updated stack with a
+          ;; new node at the top.
+          (let ((opening-token (pop stack)))
+            (funcall reduce-branch stack opening-token collection)))
+
+      ;; Unwound the stack without finding a matching paren: either bail early
+      ;; or return the original stack and continue parsing
       (if fail-fast
           (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
                            (a-get closing-token :pos)
                            (parseclj-lex-token-type closing-token))
-        ;; Unwound the stack without finding a matching paren: return the original stack and continue parsing
-        (reverse coll)))))
+
+        (reverse collection)))))
+
+(defun parseclj--take-value (stack value-p)
+  "Scan until a value is found.
+Return everything up to the value in reversed order (meaning the
+value comes first in the result).
+
+STACK is the current parse stack to scan.
+
+VALUE-P a predicate to distinguish reduced values from
+non-values (tokens and whitespace)."
+  (let ((result nil))
+    (cl-block nil
+      (while stack
+        (cond
+         ((parseclj-lex-token? (car stack))
+          (cl-return nil))
+
+         ((funcall value-p (car stack))
+          (cl-return (cons (car stack) result)))
+
+         (t
+          (push (pop stack) result)))))))
+
+(defun parseclj--take-token (stack value-p token-types)
+  "Scan until a token of a certain type is found.
+Returns nil if a value is encountered before a matching token is
+found. Return everything up to the token in reversed
+order (meaning the token comes first in the result).
+
+STACK is the current parse stack to scan.
+
+VALUE-P a predicate to distinguish reduced values from
+non-values (tokens and whitespace).
+
+TOKEN-TYPES are the token types to look for."
+  (let ((result nil))
+    (cl-block nil
+      (while stack
+        (cond
+         ((member (parseclj-lex-token-type (car stack)) token-types)
+          (cl-return (cons (car stack) result)))
+
+         ((funcall value-p (car stack))
+          (cl-return nil))
+
+         ((parseclj-lex-token? (car stack))
+          (cl-return nil))
+
+         (t
+          (push (pop stack) result)))))))
 
 (defun parseclj-parse (reduce-leaf reduce-branch &optional options)
   "Clojure/EDN stack-based shift-reduce parser.
@@ -172,12 +232,25 @@ parser relies on the presence or absence of these to detect parse
 errors.
 
 OPTIONS is an association list which is passed on to the reducing
-functions.
-"
-  (let ((fail-fast (a-get options :fail-fast t))
-        (stack nil))
+functions. Additionally the following options are recognized
 
-    (while (not (eq (parseclj-lex-token-type (setq token (parseclj-lex-next))) :eof))
+- :fail-fast
+  Raise an error when a parse error is encountered, rather than
+  continuing with a partial result.
+- :value-p
+  A predicate function to differentiate values from tokens and
+  whitespace. This is needed when scanning the stack to see if
+  any reductions can be performed. By default anything that isn't
+  a token is considered a value. This can be problematic when
+  parsing with `:lexical-preservation', and which case you should
+  provide an implementation that also returns falsy for
+  :whitespace, :comment, and :discard AST nodes. "
+  (let ((fail-fast (a-get options :fail-fast t))
+        (value-p (a-get options :value-p (lambda (e) (not (parseclj-lex-token? e)))))
+        (stack nil)
+        (token (parseclj-lex-next)))
+
+    (while (not (eq (parseclj-lex-token-type token) :eof))
       ;; (message "STACK: %S" stack)
       ;; (message "TOKEN: %S\n" token)
 
@@ -192,11 +265,17 @@ functions.
        (t (push token stack)))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
-      (seq-let [top lookup] stack
-        (when (and (parseclj-lex-token? lookup)
-                   (not (parseclj-lex-token? top)) ;; top is fully reduced
-                   (member (parseclj-lex-token-type lookup) '(:discard :tag)))
-          (setf stack (funcall reduce-branch (cddr stack) lookup (list top))))))
+      (let* ((top-value (parseclj--take-value stack value-p))
+             (opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
+             (new-stack (nthcdr (+ (length top-value) (length opening-token)) stack)))
+        (when (and top-value opening-token)
+          ;; (message "Reducing...")
+          ;; (message "  - STACK %S" stack)
+          ;; (message "  - OPENING_TOKEN %S" opening-token)
+          ;; (message "  - TOP_VALUE %S\n" top-value)
+          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value)))))
+
+      (setq token (parseclj-lex-next)))
 
     ;; reduce root
     (when fail-fast
@@ -229,7 +308,10 @@ key-value pairs to specify parsing options.
         (insert (car string-and-options))
         (goto-char 1)
         (apply 'parseclj-parse-clojure (cdr string-and-options)))
-    (let* ((options (apply 'a-list string-and-options))
+    (let* ((value-p (lambda (e)
+                      (and (parseclj-ast-node? e)
+                           (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard))))))
+           (options (apply 'a-list :value-p value-p string-and-options))
            (lexical? (a-get options :lexical-preservation)))
       (parseclj-parse (if lexical?
                           #'parseclj-ast--reduce-leaf-with-lexical-preservation
