@@ -84,7 +84,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
                  (:lbrace :map)
                  (t type))))
     (cl-case type
-      (:root (cons (parseclj-ast-node :root 0 :children children) stack))
+      (:root (cons (parseclj-ast-node :root pos :children children) stack))
       (:discard stack)
       (:tag (list (parseclj-ast-node :tag
                                      pos

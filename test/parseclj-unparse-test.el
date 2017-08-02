@@ -37,7 +37,7 @@
   (should (equal "(0 1 2)"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :list)
                                    (:position . 1)
                                    (:children . (((:node-type . :number)
@@ -57,7 +57,7 @@
   (should (equal "()"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :list)
                                    (:position . 1)
                                    (:children . nil)))))))))
@@ -66,7 +66,7 @@
   (should (equal "((.9 abc (true) (hello)))"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :list)
                                    (:position . 1)
                                    (:children . (((:node-type . :list)
@@ -96,7 +96,7 @@
   (should (equal "\"abc hello \\t\\\"x\""
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :string)
                                    (:position . 1)
                                    (:form . "\"abc hello \\t\\\"x\"")
@@ -106,7 +106,7 @@
   (should (equal "(\\newline \\return \\space \\tab \\a \\b \\c \\u0078 \\o171)"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :list)
                                    (:position . 1)
                                    (:children . (((:node-type . :character) (:position . 2) (:form . "\\newline") (:value . ?\n))
@@ -124,7 +124,7 @@
   (should (equal ":foo-bar"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :keyword)
                                    (:position . 1)
                                    (:form . ":foo-bar")
@@ -134,7 +134,7 @@
   (should (equal "[123]"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :vector)
                                    (:position . 1)
                                    (:children . (((:node-type . :number)
@@ -146,7 +146,7 @@
   (should (equal "{:count 123}"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :map)
                                    (:position . 1)
                                    (:children . (((:node-type . :keyword)
@@ -162,7 +162,7 @@
   (should (equal "#{:x}"
                  (parseclj-unparse-clojure-to-string
                   '((:node-type . :root)
-                    (:position . 0)
+                    (:position . 1)
                     (:children . (((:node-type . :set)
                                    (:position . 1)
                                    (:children . (((:node-type . :keyword)
