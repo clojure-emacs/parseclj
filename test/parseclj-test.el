@@ -144,6 +144,58 @@
   ;; TODO: uneven map forms
   )
 
+(ert-deftest parseclj-parse-clojure-lexical-preservation ()
+  (should (equal
+           (parseclj-parse-clojure "#_ (1 2 3) true")
+           '((:node-type . :root) (:position . 1) (:children ((:node-type . :true) (:position . 12) (:form . "true") (:value . t))))))
+  (should (equal
+           (parseclj-parse-clojure "#_(1 2 3) true" :lexical-preservation t)
+           '((:node-type . :root)
+             (:lexical-preservation . t)
+             (:position . 1)
+             (:children ((:node-type . :discard)
+                         (:position . 1)
+                         (:children ((:node-type . :list)
+                                     (:lexical-preservation . t)
+                                     (:position . 3)
+                                     (:children ((:node-type . :number) (:position . 4) (:form . "1") (:value . 1))
+                                                ((:node-type . :whitespace) (:position . 5) (:form . " "))
+                                                ((:node-type . :number) (:position . 6) (:form . "2") (:value . 2))
+                                                ((:node-type . :whitespace) (:position . 7) (:form . " "))
+                                                ((:node-type . :number) (:position . 8) (:form . "3") (:value . 3))))))
+                        ((:node-type . :whitespace)
+                         (:position . 10)
+                         (:form . " "))
+                        ((:node-type . :true)
+                         (:position . 11)
+                         (:form . "true")
+                         (:value . t))))))
+
+  (should (equal
+           (parseclj-parse-clojure "#_ (1 2 3) true" :lexical-preservation t)
+           '((:node-type . :root)
+             (:lexical-preservation . t)
+             (:position . 1)
+             (:children ((:node-type . :discard)
+                         (:position . 1)
+                         (:children
+                          ((:node-type . :whitespace) (:position . 3) (:form . " "))
+                          ((:node-type . :list)
+                           (:lexical-preservation . t)
+                           (:position . 4)
+                           (:children ((:node-type . :number) (:position . 5) (:form . "1") (:value . 1))
+                                      ((:node-type . :whitespace) (:position . 6) (:form . " "))
+                                      ((:node-type . :number) (:position . 7) (:form . "2") (:value . 2))
+                                      ((:node-type . :whitespace) (:position . 8) (:form . " "))
+                                      ((:node-type . :number) (:position . 9) (:form . "3") (:value . 3))))))
+                        ((:node-type . :whitespace)
+                         (:position . 11)
+                         (:form . " "))
+                        ((:node-type . :true)
+                         (:position . 12)
+                         (:form . "true")
+                         (:value . t)))))))
+
 (provide 'parseclj-test)
 
 ;;; parseclj-test.el ends here

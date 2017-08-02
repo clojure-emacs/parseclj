@@ -94,15 +94,17 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
           (parseclj-ast-node type pos :children children)
           stack)))))
 
-(defun parseclj-ast--reduce-branch-with-lexical-preservation (&rest args)
-  (let* ((stack (apply #'parseclj-ast--reduce-branch args))
-         (top (car stack)))
-    (if (parseclj-ast-node? top)
-        (cons (cl-list* (car top) ;; make sure :node-type remains the first element in the list
-                        '(:lexical-preservation . t)
-                        (cdr top))
-              (cdr stack))
-      stack)))
+(defun parseclj-ast--reduce-branch-with-lexical-preservation (stack opening-token children)
+  (if (eq :discard (parseclj-lex-token-type opening-token))
+      (cons (parseclj-ast-node :discard (a-get opening-token :pos) :children children) stack)
+    (let* ((stack (funcall #'parseclj-ast--reduce-branch stack opening-token children))
+           (top (car stack)))
+      (if (parseclj-ast-node? top)
+          (cons (cl-list* (car top) ;; make sure :node-type remains the first element in the list
+                          '(:lexical-preservation . t)
+                          (cdr top))
+                (cdr stack))
+        stack))))
 
 (provide 'parseclj-ast)
 
