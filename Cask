@@ -2,11 +2,11 @@
 (source melpa)
 (source lambdaisland "https://lambdaisland.github.io/elpa/")
 
-(package-file "clj-parse.el")
+(package-file "parseclj.el")
 
-(files "clj-lex.el"
-       "clj-edn.el"
-       "clj-ast.el")
+(files "parseclj-lex.el"
+       "parseedn.el"
+       "parseclj-ast.el")
 
 (development
  (depends-on "a")

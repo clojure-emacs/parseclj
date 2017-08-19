@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/lambdaisland/clj-parse.svg?branch=master)](https://travis-ci.org/lambdaisland/clj-parse)
+[![Build Status](https://travis-ci.org/lambdaisland/parseclj.svg?branch=master)](https://travis-ci.org/lambdaisland/parseclj)
 
 # EDN reader and Clojure parser for Emacs Lisp
 

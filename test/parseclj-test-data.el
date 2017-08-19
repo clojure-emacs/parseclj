@@ -1,4 +1,4 @@
-;;; clj-parse-test-data.el --- Clojure/EDN parser - test data
+;;; parseclj-test-data.el --- Clojure/EDN parser - test data
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(setq clj-parse-test-data
+(setq parseclj-test-data
   (a-list
 
    "simple-list"
@@ -36,7 +36,7 @@
     :source "(1 2 3)"
     :edn '((1 2 3))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . (((:node-type . :number)
@@ -58,7 +58,7 @@
     :source "()"
     :edn '(())
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . nil))))))
@@ -69,7 +69,7 @@
     :source "(1)"
     :edn '((1))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . (((:node-type . :number)
@@ -82,7 +82,7 @@
     :source "(nil true false hello-world)"
     :edn '((nil t nil hello-world))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . (((:node-type . :nil)
@@ -108,7 +108,7 @@
     :source "clojure.string/join"
     :edn '(clojure.string/join)
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :symbol)
                           (:position . 1)
                           (:form . "clojure.string/join")
@@ -119,7 +119,7 @@
     :source "((.9 abc (true) (hello)))"
     :edn '(((0.9 abc (t) (hello))))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . (((:node-type . :list)
@@ -151,7 +151,7 @@
     :source "\"abc hello \\t\\\"x\""
     :edn '("abc hello \t\"x")
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :string)
                           (:position . 1)
                           (:form . "\"abc hello \\t\\\"x\"")
@@ -162,7 +162,7 @@
     :source "(\"---\\f---\\\"-'\\'-\\\\-\\r\\n\")"
     :edn '(("---\f---\"-''-\\-\r\n"))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . (((:node-type . :string)
@@ -175,7 +175,7 @@
     :source "(\\newline \\return \\space \\tab \\a \\b \\c \\u0078 \\o171)"
     :edn '((?\n ?\r ?\ ?\t ?a ?b ?c ?x ?y))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . (((:node-type . :character) (:position . 2) (:form . "\\newline") (:value . ?\n))
@@ -193,7 +193,7 @@
     :source "\"\\u0078 \\o171\""
     :edn '("x y")
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :string)
                           (:position . 1)
                           (:form . "\"\\u0078 \\o171\"")
@@ -205,7 +205,7 @@
     :source ":foo-bar"
     :edn '(:foo-bar)
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :keyword)
                           (:position . 1)
                           (:form . ":foo-bar")
@@ -217,7 +217,7 @@
     :source "[123]"
     :edn '([123])
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :vector)
                           (:position . 1)
                           (:children . (((:node-type . :number)
@@ -231,7 +231,7 @@
     :source "{:count 123}"
     :edn (list (a-hash-table :count 123))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :map)
                           (:position . 1)
                           (:children . (((:node-type . :keyword)
@@ -249,7 +249,7 @@
     :source "#{:x}"
     :edn '((edn-set (:x)))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :set)
                           (:position . 1)
                           (:children . (((:node-type . :keyword)
@@ -262,7 +262,7 @@
     :source "(10 #_11 12 #_#_ 13 14)"
     :edn '((10 12))
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :list)
                           (:position . 1)
                           (:children . (((:node-type . :number)
@@ -279,7 +279,7 @@
    (a-list
     :source "#foo/bar [1]"
     :ast '((:node-type . :root)
-           (:position . 0)
+           (:position . 1)
            (:children . (((:node-type . :tag)
                           (:position . 1)
                           (:tag . foo/bar)
@@ -295,4 +295,4 @@
     :source "[nil true false]"
     :edn '([nil t nil]))))
 
-;;; clj-parse-test-data.el ends here
+;;; parseclj-test-data.el ends here

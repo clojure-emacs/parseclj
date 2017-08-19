@@ -1,4 +1,4 @@
-;;; clj-edn-test.el --- Unit tests for EDN reading/printing
+;;; parseedn-test.el --- Unit tests for EDN reading/printing
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -28,50 +28,50 @@
 ;;; Code
 
 (require 'ert)
-(require 'clj-parse)
+(require 'parseclj)
 
-(load "test/clj-parse-test-data.el")
+(load "test/parseclj-test-data.el")
 
-(ert-deftest clj-edn-print-test ()
-  (should (equal (clj-edn-print-str nil) "nil"))
-  (should (equal (clj-edn-print-str 100) "100"))
-  (should (equal (clj-edn-print-str 1.2) "1.2"))
-  (should (equal (clj-edn-print-str [1 2 3]) "[1 2 3]"))
-  (should (equal (clj-edn-print-str t) "true")))
+(ert-deftest parseedn-print-test ()
+  (should (equal (parseedn-print-str nil) "nil"))
+  (should (equal (parseedn-print-str 100) "100"))
+  (should (equal (parseedn-print-str 1.2) "1.2"))
+  (should (equal (parseedn-print-str [1 2 3]) "[1 2 3]"))
+  (should (equal (parseedn-print-str t) "true")))
 
-(ert-deftest clj-edn-read-test ()
-  (should (equal (clj-edn-read-str "true") t)))
+(ert-deftest parseedn-read-test ()
+  (should (equal (parseedn-read-str "true") t)))
 
-(defmacro define-clj-edn-read-tests ()
+(defmacro define-parseedn-read-tests ()
   `(progn
      ,@(mapcar
         (lambda (pair)
           (let ((name (car pair))
                 (data (cdr pair)))
             (if (and (a-get data :edn) (a-get data :source))
-                (let ((test-name (intern (concat "clj-edn-read:" name))))
+                (let ((test-name (intern (concat "parseedn-read:" name))))
                   `(ert-deftest ,test-name ()
-                     :tags '(clj-edn)
+                     :tags '(parseedn)
                      (with-temp-buffer
                        (insert ,(a-get data :source))
                        (goto-char 1)
-                       (should (a-equal (clj-edn-read) ',(a-get data :edn)))))))))
-        clj-parse-test-data)))
+                       (should (a-equal (parseedn-read) ',(a-get data :edn)))))))))
+        parseclj-test-data)))
 
-(defmacro define-clj-edn-roundtrip-tests ()
+(defmacro define-parseedn-roundtrip-tests ()
   `(progn
      ,@(mapcar
         (lambda (pair)
           (let ((name (car pair))
                 (data (cdr pair)))
             (if (and (a-get data :edn) (a-get data :source) (member :edn-roundtrip (a-get data :tags)))
-                (let ((test-name (intern (concat "clj-edn-rountrip:" name))))
+                (let ((test-name (intern (concat "parseedn-rountrip:" name))))
                   `(ert-deftest ,test-name ()
-                     :tags '(clj-edn-rountrip)
-                     (should (equal (clj-edn-print-str (car ',(a-get data :edn))) ,(a-get data :source))))))))
-        clj-parse-test-data)))
+                     :tags '(parseedn-rountrip)
+                     (should (equal (parseedn-print-str (car ',(a-get data :edn))) ,(a-get data :source))))))))
+        parseclj-test-data)))
 
-(define-clj-edn-read-tests)
-(define-clj-edn-roundtrip-tests)
+(define-parseedn-read-tests)
+(define-parseedn-roundtrip-tests)
 
-;;; clj-edn-test.el
+;;; parseedn-test.el

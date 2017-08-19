@@ -1,4 +1,4 @@
-;;; clj-parse-test.el --- Clojure/EDN parser - tests
+;;; parseclj-unparser.el --- Clojure unparser   -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017  Arne Brasseur
 
@@ -23,16 +23,31 @@
 
 ;;; Commentary:
 
-;; A reader for EDN data files and parser for Clojure source files - tests
+;; Unparse an AST to Clojure code
 
 ;;; Code:
 
-(require 'ert)
-(require 'clj-parse)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Unparser helpers
 
-;; needs testing of individual functions. all testing now is at the top level
-;; through parse/unparse
+(defun parseclj-unparse--collection (node ld rd)
+  (insert ld)
+  (let ((nodes (alist-get ':children node)))
+    (when-let (node (car nodes))
+      (parseclj-unparse-clojure node))
+    (seq-doseq (child (cdr nodes))
+      (when (not (a-get node :lexical-preservation))
+        (insert " "))
+      (parseclj-unparse-clojure child)))
+  (insert rd))
 
-(provide 'clj-parse-test)
+(defun parseclj-unparse--tag (node)
+  (progn
+    (insert "#")
+    (insert (symbol-name (a-get node :tag)))
+    (insert " ")
+    (parseclj-unparse-clojure (car (a-get node :children)))))
 
-;;; clj-parse-test.el ends here
+(provide 'parseclj-unparse)
+
+;;; parseclj-unparse.el ends here
