@@ -33,7 +33,6 @@
 (require 'cl-lib)
 (require 'subr-x)
 (require 'a)
-
 (require 'parseclj-lex)
 (require 'parseedn)
 (require 'parseclj-ast)
@@ -191,17 +190,21 @@ errors.
 OPTIONS is an association list which is passed on to the reducing
 functions. Additionally the following options are recognized
 
-- :fail-fast
+- `:fail-fast'
   Raise an error when a parse error is encountered, rather than continuing
   with a partial result.
-- :value-p
+- `:value-p'
   A predicate function to differentiate values from tokens and
   whitespace. This is needed when scanning the stack to see if any
   reductions can be performed. By default anything that isn't a token is
   considered a value. This can be problematic when parsing with
   `:lexical-preservation', and which case you should provide an
   implementation that also returns falsy for :whitespace, :comment, and
-  :discard AST nodes."
+  :discard AST nodes.
+- `:tag-readers'
+  An association list that describes tag handler functions for any possible
+  tag.  This options in only available in `parseedn-read', for more
+  information, please refer to its documentation."
   (let ((fail-fast (a-get options :fail-fast t))
         (value-p (a-get options :value-p (lambda (e) (not (parseclj-lex-token? e)))))
         (stack nil)

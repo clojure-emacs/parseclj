@@ -33,12 +33,11 @@
 
 (defun parseclj-ast-node (type position &rest attributes)
   "Create an AST node with given TYPE and POSITION.
-
-Other ATTRIBUTES can be given as a flat list of key-value pairs. "
+Other ATTRIBUTES can be given as a flat list of key-value pairs."
   (apply 'a-list :node-type type :position position attributes))
 
 (defun parseclj-ast-node? (node)
-  "Return `t' if the given NODE is a Clojure AST node."
+  "Return t if the given NODE is a Clojure AST node."
   (and (consp node)
        (consp (car node))
        (eq :node-type (caar node))))
@@ -48,12 +47,17 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
   (a-get node :node-type))
 
 (defun parseclj-ast-leaf-node? (node)
-  "Return `t' if the given ast NODE is a leaf node."
+  "Return t if the given ast NODE is a leaf node."
   (member (parseclj-ast-node-type node) parseclj--leaf-tokens))
 
 ;; Parse/reduce strategy functions
 
 (defun parseclj-ast--reduce-leaf (stack token options)
+  "Put into the STACK an AST leaf node based on TOKEN.
+Ignores white spaces and comments.
+
+OPTIONS is an association list.  See `parseclj-parse' for more information
+on available options."
   (if (member (parseclj-lex-token-type token) '(:whitespace :comment))
       stack
     (cons
@@ -64,6 +68,13 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
      stack)))
 
 (defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token options)
+  "Put into STACK an AST leaf node based on TOKEN.
+This function is very similar to `parseclj-ast--reduce-leaf', but unlike
+it, takes into account tokens representing white space or comments, and
+saves them into the STACK.
+
+OPTIONS is an association list.  See `parseclj-parse' for more information
+on available options."
   (let ((token-type (parseclj-lex-token-type token))
         (top (car stack)))
     (if (member token-type '(:whitespace :comment))
@@ -78,6 +89,14 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
       (parseclj-ast--reduce-leaf stack token options))))
 
 (defun parseclj-ast--reduce-branch (stack opening-token children options)
+  "Reduce STACK with an AST branch node representing a collection of tokens.
+Ignores discard tokens.
+
+OPENING-TOKEN is a lex token representing an opening paren, bracket or
+brace.
+CHILDREN is the collection of nodes to be reduced into the AST branch node.
+OPTIONS is an association list.  See `parseclj-parse' for more information
+on available options."
   (let* ((pos (a-get opening-token :pos))
          (type (parseclj-lex-token-type opening-token))
          (type (cl-case type
@@ -97,6 +116,17 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
           stack)))))
 
 (defun parseclj-ast--reduce-branch-with-lexical-preservation (stack opening-token children options)
+  "Reduce STACK with an AST branch node representing a collection of tokens.
+Similar to `parseclj-ast--reduce-branch', but reduces discard tokens as
+well.  Nodes produced by this function have a `:lexical-preservation'
+key set to t.
+
+OPENING-TOKEN is a lex token representing an opening paren, bracket or
+brace.
+CHILDREN is the collection of tokens to be reduced into the AST branch
+node.
+OPTIONS is an association list.  See `parseclj-parse' for more information
+on available options."
   (if (eq :discard (parseclj-lex-token-type opening-token))
       (cons (parseclj-ast-node :discard (a-get opening-token :pos) :children children) stack)
     (let* ((stack (funcall #'parseclj-ast--reduce-branch stack opening-token children options))
