@@ -34,7 +34,6 @@
 (require 'subr-x)
 (require 'a)
 (require 'parseclj-lex)
-(require 'parseedn)
 (require 'parseclj-ast)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
