@@ -38,23 +38,6 @@
 (require 'parseclj-ast)
 (require 'parseclj-unparse)
 
-(defvar parseclj--leaf-tokens '(:whitespace
-                                :comment
-                                :number
-                                :nil
-                                :true
-                                :false
-                                :symbol
-                                :keyword
-                                :string
-                                :character)
-  "Types of tokens that represent leaf nodes in the AST.")
-
-(defvar parseclj--closing-tokens '(:rparen
-                                   :rbracket
-                                   :rbrace)
-  "Types of tokens that mark the end of a non-atomic form.")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Shift-Reduce Parser
 

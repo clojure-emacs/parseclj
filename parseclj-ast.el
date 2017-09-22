@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'parseclj-lex)
 (require 'parseedn)
 
 ;; AST helper functions
@@ -48,11 +49,11 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs."
 
 (defun parseclj-ast-leaf-node? (node)
   "Return t if the given ast NODE is a leaf node."
-  (member (parseclj-ast-node-type node) parseclj--leaf-tokens))
+  (member (parseclj-ast-node-type node) parseclj-lex--leaf-tokens))
 
 ;; Parse/reduce strategy functions
 
-(defun parseclj-ast--reduce-leaf (stack token options)
+(defun parseclj-ast--reduce-leaf (stack token &optional options)
   "Put into the STACK an AST leaf node based on TOKEN.
 Ignores white spaces and comments.
 

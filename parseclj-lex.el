@@ -25,7 +25,25 @@
 
 ;; A reader for EDN data files and parser for Clojure source files.
 
-;;; Code
+;;; Code:
+
+(defvar parseclj-lex--leaf-tokens '(:whitespace
+                                    :comment
+                                    :number
+                                    :nil
+                                    :true
+                                    :false
+                                    :symbol
+                                    :keyword
+                                    :string
+                                    :character)
+  "Types of tokens that represent leaf nodes in the AST.")
+
+(defvar parseclj-lex--closing-tokens '(:rparen
+                                       :rbracket
+                                       :rbrace)
+  "Types of tokens that mark the end of a non-atomic form.")
+
 
 (defun parseclj-lex-token (type form pos &rest attributes)
   "Create a lexer token with the specified attributes.
@@ -53,11 +71,11 @@ A token is an association list with :token-type as its first key. "
 
 (defun parseclj-lex-leaf-token? (token)
   "Return `t' if the given ast TOKEN is a leaf node."
-  (member (parseclj-lex-token-type token) parseclj--leaf-tokens))
+  (member (parseclj-lex-token-type token) parseclj-lex--leaf-tokens))
 
 (defun parseclj-lex-closing-token? (token)
   "Return `t' if the given ast TOKEN is a closing toking."
-  (member (parseclj-lex-token-type token) parseclj--closing-tokens))
+  (member (parseclj-lex-token-type token) parseclj-lex--closing-tokens))
 
 (defun parseclj-lex-at-whitespace? ()
   (let ((char (char-after (point))))
