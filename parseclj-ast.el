@@ -27,6 +27,8 @@
 
 ;;; Code:
 
+(require 'parseedn)
+
 ;; AST helper functions
 
 (defun parseclj-ast-node (type position &rest attributes)
@@ -58,7 +60,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs. "
      (parseclj-ast-node (parseclj-lex-token-type token)
                         (a-get token :pos)
                         :form (a-get token :form)
-                        :value (parseclj--leaf-token-value token))
+                        :value (parseedn--leaf-token-value token))
      stack)))
 
 (defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token options)
