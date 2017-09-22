@@ -34,6 +34,9 @@
 ;;
 ;; Note that this is kind of broken, we don't correctly detect if \u or \o forms
 ;; don't have the right forms.
+
+(require 'a)
+
 (defun parseedn--string (s)
   (replace-regexp-in-string
    "\\\\o[0-8]\\{3\\}"
