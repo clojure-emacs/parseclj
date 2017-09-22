@@ -31,6 +31,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'subr-x)
 (require 'a)
 
 (require 'parseclj-lex)
@@ -113,11 +114,12 @@
 (defun parseclj--error (format &rest args)
   "Signal a parse error.
 Takes a FORMAT string and optional ARGS to be passed to
-`format-message'. Signals a 'parseclj-parse-error signal, which
+`format-message'.  Signals a 'parseclj-parse-error signal, which
 can be handled with `condition-case'."
   (signal 'parseclj-parse-error (list (apply #'format-message format args))))
 
 (defun parseclj--find-opening-token (stack closing-token)
+  "Scan STACK for an opening-token matching CLOSING-TOKEN."
   (cl-case (parseclj-lex-token-type closing-token)
     (:rparen :lparen)
     (:rbracket :lbracket)
@@ -128,7 +130,15 @@ can be handled with `condition-case'."
                         stack)))))
 
 (defun parseclj--reduce-coll (stack closing-token reduce-branch options)
-  "Reduce collection based on the top of the stack"
+  "Reduce collection based on the top of the STACK and a CLOSING-TOKEN.
+
+REDUCE-BRANCH is a function to be applied to the collection of tokens found
+from the top of the stack until CLOSING-TOKEN.  This function should return
+an AST token representing such collection.
+
+OPTIONS is an association list.  This list is also passed down to the
+REDUCE-BRANCH function.  See `parseclj-parse' for more information on
+available options."
   (let ((opening-token-type (parseclj--find-opening-token stack closing-token))
         (fail-fast (a-get options :fail-fast t))
         (collection nil))
@@ -162,14 +172,14 @@ can be handled with `condition-case'."
         (reverse collection)))))
 
 (defun parseclj--take-value (stack value-p)
-  "Scan until a value is found.
-Return everything up to the value in reversed order (meaning the
-value comes first in the result).
+  "Scan STACK until a value is found.
+Return everything up to the value in reversed order (meaning the value
+comes first in the result).
 
 STACK is the current parse stack to scan.
 
-VALUE-P a predicate to distinguish reduced values from
-non-values (tokens and whitespace)."
+VALUE-P a predicate to distinguish reduced values from non-values (tokens
+and whitespace)."
   (let ((result nil))
     (cl-block nil
       (while stack
@@ -184,15 +194,15 @@ non-values (tokens and whitespace)."
           (push (pop stack) result)))))))
 
 (defun parseclj--take-token (stack value-p token-types)
-  "Scan until a token of a certain type is found.
-Returns nil if a value is encountered before a matching token is
-found. Return everything up to the token in reversed
-order (meaning the token comes first in the result).
+  "Scan STACK until a token of a certain type is found.
+Returns nil if a value is encountered before a matching token is found.
+Return everything up to the token in reversed order (meaning the token
+comes first in the result).
 
 STACK is the current parse stack to scan.
 
-VALUE-P a predicate to distinguish reduced values from
-non-values (tokens and whitespace).
+VALUE-P a predicate to distinguish reduced values from non-values (tokens
+and whitespace).
 
 TOKEN-TYPES are the token types to look for."
   (let ((result nil))
@@ -201,51 +211,47 @@ TOKEN-TYPES are the token types to look for."
         (cond
          ((member (parseclj-lex-token-type (car stack)) token-types)
           (cl-return (cons (car stack) result)))
-
          ((funcall value-p (car stack))
           (cl-return nil))
-
          ((parseclj-lex-token? (car stack))
           (cl-return nil))
-
          (t
           (push (pop stack) result)))))))
 
 (defun parseclj-parse (reduce-leaf reduce-branch &optional options)
   "Clojure/EDN stack-based shift-reduce parser.
 
-REDUCE-LEAF does reductions for leaf nodes. It is a function that
-takes the current value of the stack and a token, and either
-returns an updated stack, with a new leaf node at the
-top (front), or returns the stack unmodified.
+REDUCE-LEAF does reductions for leaf nodes.  It is a function that takes
+the current value of the stack and a token, and either returns an updated
+stack, with a new leaf node at the top (front), or returns the stack
+unmodified.
 
-REDUCE-BRANCH does reductions for branch nodes. It is a function
-that takes the current value of the stack, the type of branch
-node to create, and a list of child nodes, and returns an updated
-stack, with the new node at the top (front).
+REDUCE-BRANCH does reductions for branch nodes.  It is a function that
+takes the current value of the stack, the type of branch node to create,
+and a list of child nodes, and returns an updated stack, with the new node
+at the top (front).
 
-What \"node\" means in this case is up to the reducing functions,
-it could be AST nodes (as in the case of
-`parseclj-parse-clojure'), or plain values/sexps (as in the case
-of `parseedn-read'), or something else. The only requirement is
-that they should not put raw tokens back on the stack, as the
-parser relies on the presence or absence of these to detect parse
+What \"node\" means in this case is up to the reducing functions, it could
+be AST nodes (as in the case of `parseclj-parse-clojure'), or plain
+values/sexps (as in the case of `parseedn-read'), or something else. The
+only requirement is that they should not put raw tokens back on the stack,
+as the parser relies on the presence or absence of these to detect parse
 errors.
 
 OPTIONS is an association list which is passed on to the reducing
 functions. Additionally the following options are recognized
 
 - :fail-fast
-  Raise an error when a parse error is encountered, rather than
-  continuing with a partial result.
+  Raise an error when a parse error is encountered, rather than continuing
+  with a partial result.
 - :value-p
   A predicate function to differentiate values from tokens and
-  whitespace. This is needed when scanning the stack to see if
-  any reductions can be performed. By default anything that isn't
-  a token is considered a value. This can be problematic when
-  parsing with `:lexical-preservation', and which case you should
-  provide an implementation that also returns falsy for
-  :whitespace, :comment, and :discard AST nodes. "
+  whitespace. This is needed when scanning the stack to see if any
+  reductions can be performed. By default anything that isn't a token is
+  considered a value. This can be problematic when parsing with
+  `:lexical-preservation', and which case you should provide an
+  implementation that also returns falsy for :whitespace, :comment, and
+  :discard AST nodes."
   (let ((fail-fast (a-get options :fail-fast t))
         (value-p (a-get options :value-p (lambda (e) (not (parseclj-lex-token? e)))))
         (stack nil)
@@ -296,15 +302,15 @@ functions. Additionally the following options are recognized
   "Parse Clojure source to AST.
 
 Reads either from the current buffer, starting from point, until
-point-max, or reads from the optional string argument.
+`point-max', or reads from the optional string argument.
 
 STRING-AND-OPTIONS can be an optional string, followed by
 key-value pairs to specify parsing options.
 
 - `:lexical-preservation' Retain whitespace, comments, and
-  discards. Defaults to false (`nil').
+  discards.  Defaults to nil.
 - `:fail-fast' Raise an error
-  when encountering invalid syntax. Defaults to true (`t'). "
+  when encountering invalid syntax.  Defaults to t."
   (if (stringp (car string-and-options))
       (with-temp-buffer
         (insert (car string-and-options))
