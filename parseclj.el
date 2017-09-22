@@ -36,7 +36,6 @@
 (require 'parseclj-lex)
 (require 'parseedn)
 (require 'parseclj-ast)
-(require 'parseclj-unparse)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Shift-Reduce Parser
@@ -273,13 +272,9 @@ parseclj-parse-clojure), turn it back into source code, and
 insert it into the current buffer."
   (if (parseclj-ast-leaf-node? ast)
       (insert (a-get ast :form))
-    (cl-case (parseclj-ast-node-type ast)
-      (:root (parseclj-unparse--collection ast "" ""))
-      (:list (parseclj-unparse--collection ast "(" ")"))
-      (:vector (parseclj-unparse--collection ast "[" "]"))
-      (:set (parseclj-unparse--collection ast "#{" "}"))
-      (:map (parseclj-unparse--collection ast "{" "}"))
-      (:tag (parseclj-unparse--tag ast)))))
+    (if (eql (parseclj-ast-node-type ast) :tag)
+        (parseclj-ast--unparse-tag ast)
+      (parseclj-ast--unparse-collection ast))))
 
 (defun parseclj-unparse-clojure-to-string (ast)
   "Parse Clojure AST to a source code string.

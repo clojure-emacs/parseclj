@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'subr-x)
 (require 'parseclj-lex)
 (require 'parseedn)
 
@@ -51,6 +52,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs."
   "Return t if the given ast NODE is a leaf node."
   (member (parseclj-ast-node-type node) parseclj-lex--leaf-tokens))
 
+
 ;; Parse/reduce strategy functions
 
 (defun parseclj-ast--reduce-leaf (stack token &optional options)
@@ -138,6 +140,39 @@ on available options."
                           (cdr top))
                 (cdr stack))
         stack))))
+
+
+
+;; Unparse functions
+
+(declare-function parseclj-unparse-clojure "parseclj")
+
+(defun parseclj-ast--unparse-collection (node)
+  "Insert the given AST branch NODE into buffer as a string."
+  (let* ((token-type (parseclj-ast-node-type node))
+         (delimiters (cl-case token-type
+                       (:root (cons "" ""))
+                       (:list (cons "(" ")"))
+                       (:vector (cons "[" "]"))
+                       (:set (cons "#{" "}"))
+                       (:map (cons "{" "}")))))
+    (insert (car delimiters))
+    (let ((nodes (alist-get ':children node)))
+      (when-let (node (car nodes))
+        (parseclj-unparse-clojure node))
+      (seq-doseq (child (cdr nodes))
+        (when (not (a-get node :lexical-preservation))
+          (insert " "))
+        (parseclj-unparse-clojure child)))
+    (insert (cdr delimiters))))
+
+(defun parseclj-ast--unparse-tag (node)
+  "Insert the given AST tag NODE into buffer as a string."
+  (progn
+    (insert "#")
+    (insert (symbol-name (a-get node :tag)))
+    (insert " ")
+    (parseclj-unparse-clojure (car (a-get node :children)))))
 
 (provide 'parseclj-ast)
 
