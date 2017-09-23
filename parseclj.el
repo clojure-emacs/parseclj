@@ -63,8 +63,9 @@ can be handled with `condition-case'."
   "Reduce collection based on the top of the STACK and a CLOSING-TOKEN.
 
 REDUCE-BRANCH is a function to be applied to the collection of tokens found
-from the top of the stack until CLOSING-TOKEN.  This function should return
-an AST token representing such collection.
+from the top of the stack until an opening token that matches
+CLOSING-TOKEN.  This function should return an AST token representing such
+collection.
 
 OPTIONS is an association list.  This list is also passed down to the
 REDUCE-BRANCH function.  See `parseclj-parse' for more information on

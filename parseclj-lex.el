@@ -74,7 +74,7 @@ A token is an association list with :token-type as its first key."
   (member (parseclj-lex-token-type token) parseclj-lex--leaf-tokens))
 
 (defun parseclj-lex-closing-token-p (token)
-  "Return t if the given ast TOKEN is a closing toking."
+  "Return t if the given ast TOKEN is a closing token."
   (member (parseclj-lex-token-type token) parseclj-lex--closing-tokens))
 
 (defun parseclj-lex-at-whitespace-p ()
@@ -120,7 +120,7 @@ A token is an association list with :token-type as its first key."
   (parseclj-lex-skip-digits))
 
 (defun parseclj-lex-number ()
-  "Consume a number and return a :number token."
+  "Consume a number and return a `:number' token representing it."
   (let ((pos (point)))
     (parseclj-lex-skip-number)
 
@@ -185,7 +185,7 @@ For more information on what determines a valid symbol, see
       (eq ?# char)))
 
 (defun parseclj-lex-get-symbol-at-point (pos)
-  "Return a string containing the symbol at POS."
+  "Return the symbol at POS as a string."
   (while (parseclj-lex-symbol-rest-p (char-after (point)))
     (right-char))
   (buffer-substring-no-properties pos (point)))
@@ -258,8 +258,8 @@ token is returned."
 
 (defun parseclj-lex-keyword ()
   "Return a lex token representing a keyword.
-Keywords follow the same rules as symbols, except they might start with one
-or two colon characters.
+Keywords follow the same rules as symbols, except they start with one or
+two colon characters.
 
 See `parseclj-lex-symbol', `parseclj-lex-symbol-start-p'."
   (let ((pos (point)))

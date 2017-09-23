@@ -73,8 +73,9 @@ on available options."
 (defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token options)
   "Put into STACK an AST leaf node based on TOKEN.
 This function is very similar to `parseclj-ast--reduce-leaf', but unlike
-it, takes into account tokens representing white space or comments, and
-saves them into the STACK.
+it, takes into account tokens representing white space or comments and
+saves them into the STACK.  Nodes produced by this function have a
+`:lexical-preservation' key set to t.
 
 OPTIONS is an association list.  See `parseclj-parse' for more information
 on available options."
@@ -92,7 +93,7 @@ on available options."
       (parseclj-ast--reduce-leaf stack token options))))
 
 (defun parseclj-ast--reduce-branch (stack opening-token children options)
-  "Reduce STACK with an AST branch node representing a collection of tokens.
+  "Reduce STACK with an AST branch node representing a collection of elements.
 Ignores discard tokens.
 
 OPENING-TOKEN is a lex token representing an opening paren, bracket or
@@ -119,7 +120,7 @@ on available options."
           stack)))))
 
 (defun parseclj-ast--reduce-branch-with-lexical-preservation (stack opening-token children options)
-  "Reduce STACK with an AST branch node representing a collection of tokens.
+  "Reduce STACK with an AST branch node representing a collection of elements.
 Similar to `parseclj-ast--reduce-branch', but reduces discard tokens as
 well.  Nodes produced by this function have a `:lexical-preservation'
 key set to t.
@@ -148,7 +149,7 @@ on available options."
 (declare-function parseclj-unparse-clojure "parseclj")
 
 (defun parseclj-ast--unparse-collection (node)
-  "Insert the given AST branch NODE into buffer as a string."
+  "Insert a string representation of the given AST branch NODE into buffer."
   (let* ((token-type (parseclj-ast-node-type node))
          (delimiters (cl-case token-type
                        (:root (cons "" ""))
@@ -167,7 +168,7 @@ on available options."
     (insert (cdr delimiters))))
 
 (defun parseclj-ast--unparse-tag (node)
-  "Insert the given AST tag NODE into buffer as a string."
+  "Insert a string representation of the given AST tag NODE into buffer."
   (progn
     (insert "#")
     (insert (symbol-name (a-get node :tag)))
