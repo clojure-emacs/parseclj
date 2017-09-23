@@ -56,7 +56,7 @@ Tokens at a mimimum have these attributes
 Other ATTRIBUTES can be given as a flat list of key-value pairs."
   (apply 'a-list :token-type type :form form :pos pos attributes))
 
-(defun parseclj-lex-token? (token)
+(defun parseclj-lex-token-p (token)
   "Is the given TOKEN a parseclj-lex TOKEN.
 
 A token is an association list with :token-type as its first key."
@@ -69,15 +69,15 @@ A token is an association list with :token-type as its first key."
   (and (consp token)
        (cdr (assq :token-type token))))
 
-(defun parseclj-lex-leaf-token? (token)
+(defun parseclj-lex-leaf-token-p (token)
   "Return t if the given AST TOKEN is a leaf node."
   (member (parseclj-lex-token-type token) parseclj-lex--leaf-tokens))
 
-(defun parseclj-lex-closing-token? (token)
+(defun parseclj-lex-closing-token-p (token)
   "Return t if the given ast TOKEN is a closing toking."
   (member (parseclj-lex-token-type token) parseclj-lex--closing-tokens))
 
-(defun parseclj-lex-at-whitespace? ()
+(defun parseclj-lex-at-whitespace-p ()
   "Return t if char at point is white space."
   (let ((char (char-after (point))))
     (or (equal char ?\ )
@@ -86,14 +86,14 @@ A token is an association list with :token-type as its first key."
         (equal char ?\r)
         (equal char ?,))))
 
-(defun parseclj-lex-at-eof? ()
+(defun parseclj-lex-at-eof-p ()
   "Return t if point is at the end of file."
   (eq (point) (point-max)))
 
 (defun parseclj-lex-whitespace ()
   "Consume all consecutive white space as possible and return an :whitespace token."
   (let ((pos (point)))
-    (while (parseclj-lex-at-whitespace?)
+    (while (parseclj-lex-at-whitespace-p)
       (right-char))
     (parseclj-lex-token :whitespace
                         (buffer-substring-no-properties pos (point))
@@ -150,18 +150,18 @@ A token is an association list with :token-type as its first key."
                             pos)))))
 
 
-(defun parseclj-lex-digit? (char)
+(defun parseclj-lex-digit-p (char)
   "Return t if CHAR is a digit."
   (and char (<= ?0 char) (<= char ?9)))
 
-(defun parseclj-lex-at-number? ()
+(defun parseclj-lex-at-number-p ()
   "Return t if point is at a number."
   (let ((char (char-after (point))))
-    (or (parseclj-lex-digit? char)
+    (or (parseclj-lex-digit-p char)
         (and (member char '(?- ?+ ?.))
-             (parseclj-lex-digit? (char-after (1+ (point))))))))
+             (parseclj-lex-digit-p (char-after (1+ (point))))))))
 
-(defun parseclj-lex-symbol-start? (char &optional alpha-only)
+(defun parseclj-lex-symbol-start-p (char &optional alpha-only)
   "Return t if CHAR is a valid start for a symbol.
 
 Symbols begin with a non-numeric character and can contain alphanumeric
@@ -175,18 +175,18 @@ alphabetic characters only.  ALPHA-ONLY ensures this behavior."
                      (and (<= ?A char) (<= char ?Z))
                      (and (not alpha-only) (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/))))))))
 
-(defun parseclj-lex-symbol-rest? (char)
+(defun parseclj-lex-symbol-rest-p (char)
   "Return t if CHAR is a valid character in a symbol.
 For more information on what determines a valid symbol, see
-`parseclj-lex-symbol-start?'"
-  (or (parseclj-lex-symbol-start? char)
-      (parseclj-lex-digit? char)
+`parseclj-lex-symbol-start-p'"
+  (or (parseclj-lex-symbol-start-p char)
+      (parseclj-lex-digit-p char)
       (eq ?: char)
       (eq ?# char)))
 
 (defun parseclj-lex-get-symbol-at-point (pos)
   "Return a string containing the symbol at POS."
-  (while (parseclj-lex-symbol-rest? (char-after (point)))
+  (while (parseclj-lex-symbol-rest-p (char-after (point)))
     (right-char))
   (buffer-substring-no-properties pos (point)))
 
@@ -209,7 +209,7 @@ If EOF is reached without finding a closing double quote, a :lex-error
 token is returned."
   (let ((pos (point)))
     (right-char)
-    (while (not (or (equal (char-after (point)) ?\") (parseclj-lex-at-eof?)))
+    (while (not (or (equal (char-after (point)) ?\") (parseclj-lex-at-eof-p)))
       (if (equal (char-after (point)) ?\\)
           (right-char 2)
         (right-char)))
@@ -261,7 +261,7 @@ token is returned."
 Keywords follow the same rules as symbols, except they might start with one
 or two colon characters.
 
-See `parseclj-lex-symbol', `parseclj-lex-symbol-start?'."
+See `parseclj-lex-symbol', `parseclj-lex-symbol-start-p'."
   (let ((pos (point)))
     (right-char)
     (when (equal (char-after (point)) ?:) ;; same-namespace keyword
@@ -271,7 +271,7 @@ See `parseclj-lex-symbol', `parseclj-lex-symbol-start?'."
           (right-char)
           (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos :error-type :invalid-keyword))
       (progn
-        (while (or (parseclj-lex-symbol-rest? (char-after (point)))
+        (while (or (parseclj-lex-symbol-rest-p (char-after (point)))
                    (equal (char-after (point)) ?#))
           (right-char))
         (parseclj-lex-token :keyword (buffer-substring-no-properties pos (point)) pos)))))
@@ -288,12 +288,12 @@ See `parseclj-lex-symbol', `parseclj-lex-symbol-start?'."
   "Consume characters at point and return the next lexical token.
 
 See `parseclj-lex-token'."
-  (if (parseclj-lex-at-eof?)
+  (if (parseclj-lex-at-eof-p)
       (parseclj-lex-token :eof nil (point))
     (let ((char (char-after (point)))
           (pos  (point)))
       (cond
-       ((parseclj-lex-at-whitespace?)
+       ((parseclj-lex-at-whitespace-p)
         (parseclj-lex-whitespace))
 
        ((equal char ?\()
@@ -320,10 +320,10 @@ See `parseclj-lex-token'."
         (right-char)
         (parseclj-lex-token :rbrace "}" pos))
 
-       ((parseclj-lex-at-number?)
+       ((parseclj-lex-at-number-p)
         (parseclj-lex-number))
 
-       ((parseclj-lex-symbol-start? char)
+       ((parseclj-lex-symbol-start-p char)
         (parseclj-lex-symbol))
 
        ((equal char ?\")
@@ -348,12 +348,12 @@ See `parseclj-lex-token'."
            ((equal char ?_)
             (right-char)
             (parseclj-lex-token :discard "#_" pos))
-           ((parseclj-lex-symbol-start? char t)
+           ((parseclj-lex-symbol-start-p char t)
             (right-char)
             (parseclj-lex-token :tag (concat "#" (parseclj-lex-get-symbol-at-point (1+ pos))) pos))
            (t
-            (while (not (or (parseclj-lex-at-whitespace?)
-                            (parseclj-lex-at-eof?)))
+            (while (not (or (parseclj-lex-at-whitespace-p)
+                            (parseclj-lex-at-eof-p)))
               (right-char))
             (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos :error-type :invalid-hashtag-dispatcher)))))
 

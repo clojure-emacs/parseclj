@@ -38,7 +38,7 @@
 Other ATTRIBUTES can be given as a flat list of key-value pairs."
   (apply 'a-list :node-type type :position position attributes))
 
-(defun parseclj-ast-node? (node)
+(defun parseclj-ast-node-p (node)
   "Return t if the given NODE is a Clojure AST node."
   (and (consp node)
        (consp (car node))
@@ -48,7 +48,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs."
   "Return the type of the AST node NODE."
   (a-get node :node-type))
 
-(defun parseclj-ast-leaf-node? (node)
+(defun parseclj-ast-leaf-node-p (node)
   "Return t if the given ast NODE is a leaf node."
   (member (parseclj-ast-node-type node) parseclj-lex--leaf-tokens))
 
@@ -134,7 +134,7 @@ on available options."
       (cons (parseclj-ast-node :discard (a-get opening-token :pos) :children children) stack)
     (let* ((stack (funcall #'parseclj-ast--reduce-branch stack opening-token children options))
            (top (car stack)))
-      (if (parseclj-ast-node? top)
+      (if (parseclj-ast-node-p top)
           (cons (cl-list* (car top) ;; make sure :node-type remains the first element in the list
                           '(:lexical-preservation . t)
                           (cdr top))

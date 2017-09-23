@@ -82,7 +82,7 @@ available options."
         (progn
           (when fail-fast
             ;; any unreduced tokens left: bail early
-            (when-let ((token (seq-find #'parseclj-lex-token? collection)))
+            (when-let ((token (seq-find #'parseclj-lex-token-p collection)))
               (parseclj--error "At position %s, unmatched %S"
                                (a-get token :pos)
                                (parseclj-lex-token-type token))))
@@ -114,7 +114,7 @@ and whitespace)."
     (cl-block nil
       (while stack
         (cond
-         ((parseclj-lex-token? (car stack))
+         ((parseclj-lex-token-p (car stack))
           (cl-return nil))
 
          ((funcall value-p (car stack))
@@ -143,7 +143,7 @@ TOKEN-TYPES are the token types to look for."
           (cl-return (cons (car stack) result)))
          ((funcall value-p (car stack))
           (cl-return nil))
-         ((parseclj-lex-token? (car stack))
+         ((parseclj-lex-token-p (car stack))
           (cl-return nil))
          (t
           (push (pop stack) result)))))))
@@ -187,7 +187,7 @@ functions. Additionally the following options are recognized
   tag.  This options in only available in `parseedn-read', for more
   information, please refer to its documentation."
   (let ((fail-fast (a-get options :fail-fast t))
-        (value-p (a-get options :value-p (lambda (e) (not (parseclj-lex-token? e)))))
+        (value-p (a-get options :value-p (lambda (e) (not (parseclj-lex-token-p e)))))
         (stack nil)
         (token (parseclj-lex-next)))
 
@@ -197,10 +197,10 @@ functions. Additionally the following options are recognized
 
       ;; Reduce based on the top item on the stack (collections)
       (cond
-       ((parseclj-lex-leaf-token? token)
+       ((parseclj-lex-leaf-token-p token)
         (setf stack (funcall reduce-leaf stack token options)))
 
-       ((parseclj-lex-closing-token? token)
+       ((parseclj-lex-closing-token-p token)
         (setf stack (parseclj--reduce-coll stack token reduce-branch options)))
 
        (t (push token stack)))
@@ -220,7 +220,7 @@ functions. Additionally the following options are recognized
 
     ;; reduce root
     (when fail-fast
-      (when-let ((token (seq-find #'parseclj-lex-token? stack)))
+      (when-let ((token (seq-find #'parseclj-lex-token-p stack)))
         (parseclj--error "At position %s, unmatched %S"
                          (a-get token :pos)
                          (parseclj-lex-token-type token))))
@@ -251,7 +251,7 @@ key-value pairs to specify parsing options.
         (goto-char 1)
         (apply 'parseclj-parse-clojure (cdr string-and-options)))
     (let* ((value-p (lambda (e)
-                      (and (parseclj-ast-node? e)
+                      (and (parseclj-ast-node-p e)
                            (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard))))))
            (options (apply 'a-list :value-p value-p string-and-options))
            (lexical? (a-get options :lexical-preservation)))
@@ -269,7 +269,7 @@ key-value pairs to specify parsing options.
 Given an abstract syntax tree AST (as returned by
 parseclj-parse-clojure), turn it back into source code, and
 insert it into the current buffer."
-  (if (parseclj-ast-leaf-node? ast)
+  (if (parseclj-ast-leaf-node-p ast)
       (insert (a-get ast :form))
     (if (eql (parseclj-ast-node-type ast) :tag)
         (parseclj-ast--unparse-tag ast)
