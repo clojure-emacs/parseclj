@@ -36,8 +36,10 @@
 ;; don't have the right forms.
 
 (require 'a)
+(require 'parseclj-lex)
 
 (defun parseedn--string (s)
+  ""
   (replace-regexp-in-string
    "\\\\o[0-8]\\{3\\}"
    (lambda (x)
@@ -59,6 +61,7 @@
                               (substring s 1 -1)))))
 
 (defun parseedn--character (c)
+  "Parse a EDN character C into an Emacs Lisp character."
   (let ((first-char (elt c 1)))
     (cond
      ((equal c "\\newline") ?\n)
@@ -90,17 +93,30 @@
           'uuid (lambda (s)
                   (list 'edn-uuid s)))
   "Default reader functions for handling tagged literals in EDN.
-These are the ones defined in the EDN spec, #inst and #uuid. It
+These are the ones defined in the EDN spec, #inst and #uuid.  It
 is not recommended you change this variable, as this globally
-changes the behavior of the EDN reader. Instead pass your own
+changes the behavior of the EDN reader.  Instead pass your own
 handlers as an optional argument to the reader functions.")
 
 (defun parseedn-reduce-leaf (stack token options)
+  "Put in the STACK an elisp value representing TOKEN.
+
+OPTIONS is an association list.  See `parseclj-parse' for more information
+on available options."
   (if (member (parseclj-lex-token-type token) (list :whitespace :comment))
       stack
     (cons (parseedn--leaf-token-value token) stack)))
 
 (defun parseedn-reduce-branch (stack opening-token children options)
+  "Reduce STACK with an sequence containing a collection of other elisp values.
+Ignores discard tokens.
+
+OPENING-TOKEN is a lex token representing an opening paren, bracket or
+brace.
+CHILDREN is a collection elisp values to be reduced into an elisp
+sequence.
+OPTIONS is an association list.  See `parseclj-parse' for more information
+on available options."
   (let ((tag-readers (a-merge parseedn-default-tag-readers (a-get options :tag-readers)))
         (token-type (parseclj-lex-token-type opening-token)))
     (if (eq token-type :discard)
@@ -125,21 +141,33 @@ handlers as an optional argument to the reader functions.")
        stack))))
 
 (defun parseedn-read (&optional tag-readers)
+  "Read content from current buffer and parse it as EDN source.
+Returns an Emacs Lisp value.
+
+TAG-READERS is an optional association list where keys are symbols
+identifying *tags*, and values are tag handler functions that receive one
+argument: *the tagged element*, and specify how to interpret it."
   (parseclj-parse #'parseedn-reduce-leaf
                   #'parseedn-reduce-branch
                   (a-list :tag-readers tag-readers)))
 
 (defun parseedn-read-str (s &optional tag-readers)
+  "Parse string S as EDN.
+Returns an Emacs Lisp value.
+
+TAG-READERS is an optional association list.  For more information, see
+`parseedn-read'."
   (with-temp-buffer
     (insert s)
     (goto-char 1)
     (car (parseedn-read tag-readers))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Printer
 
-
 (defun parseedn-print-seq (coll)
+  "Insert sequence COLL as EDN into the current buffer."
   (parseedn-print (elt coll 0))
   (let ((next (seq-drop coll 1)))
     (when (not (seq-empty-p next))
@@ -147,6 +175,7 @@ handlers as an optional argument to the reader functions.")
       (parseedn-print-seq next))))
 
 (defun parseedn-print-kvs (map)
+  "Insert hash table MAP as an EDN map into the current buffer."
   (let ((keys (a-keys map)))
     (parseedn-print (car keys))
     (insert " ")
@@ -157,6 +186,8 @@ handlers as an optional argument to the reader functions.")
         (parseedn-print-kvs next)))))
 
 (defun parseedn-print (datum)
+  "Insert DATUM as EDN into the current buffer.
+DATUM can be any Emacs Lisp value."
   (cond
    ((or (null datum) (numberp datum))
     (prin1 datum (current-buffer)))
@@ -192,6 +223,8 @@ handlers as an optional argument to the reader functions.")
     (insert "{") (parseedn-print-kvs datum) (insert "}"))))
 
 (defun parseedn-print-str (datum)
+  "Return a string containing DATUM as EDN.
+DATUM can be any Emacs Lisp value."
   (with-temp-buffer
     (parseedn-print datum)
     (buffer-substring-no-properties (point-min) (point-max))))
