@@ -69,56 +69,56 @@
            (condition-case errdata
                (parseclj-parse-clojure "foo]")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 4, unmatched :rbracket"))
+           "At position 4, unmatched :rbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "[foo")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 1, unmatched :lbracket"))
+           "At position 1, unmatched :lbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "(1 2 [ 4)")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 6, unmatched :lbracket"))
+           "At position 6, unmatched :lbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "1 2 #_")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 5, unmatched :discard"))
+           "At position 5, unmatched :discard"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "(1 [2 {3 ( 4}])")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 10, unmatched :lparen")))
+           "At position 10, unmatched :lparen")))
 
 (ert-deftest parseclj-parse-clojure-fail-fast-test ()
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "foo]")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 4, unmatched :rbracket"))
+           "At position 4, unmatched :rbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "[foo")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 1, unmatched :lbracket"))
+           "At position 1, unmatched :lbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "(1 2 [ 4)")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 6, unmatched :lbracket"))
+           "At position 6, unmatched :lbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "1 2 #_")
              (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 5, unmatched :discard"))
+           "At position 5, unmatched :discard"))
 
   (should (equal (parseclj-parse-clojure "(1 [2 {3 ( 4}])" :fail-fast nil)
                  '((:node-type . :root)

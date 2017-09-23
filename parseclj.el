@@ -83,7 +83,7 @@ available options."
           (when fail-fast
             ;; any unreduced tokens left: bail early
             (when-let ((token (seq-find #'parseclj-lex-token? collection)))
-              (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
+              (parseclj--error "At position %s, unmatched %S"
                                (a-get token :pos)
                                (parseclj-lex-token-type token))))
 
@@ -95,7 +95,7 @@ available options."
       ;; Unwound the stack without finding a matching paren: either bail early
       ;; or return the original stack and continue parsing
       (if fail-fast
-          (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
+          (parseclj--error "At position %s, unmatched %S"
                            (a-get closing-token :pos)
                            (parseclj-lex-token-type closing-token))
 
@@ -221,7 +221,7 @@ functions. Additionally the following options are recognized
     ;; reduce root
     (when fail-fast
       (when-let ((token (seq-find #'parseclj-lex-token? stack)))
-        (parseclj--error "parseclj: Syntax Error at position %s, unmatched %S"
+        (parseclj--error "At position %s, unmatched %S"
                          (a-get token :pos)
                          (parseclj-lex-token-type token))))
 
