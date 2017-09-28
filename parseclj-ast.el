@@ -67,7 +67,7 @@ on available options."
      (parseclj-ast-node (parseclj-lex-token-type token)
                         (a-get token :pos)
                         :form (a-get token :form)
-                        :value (parseedn--leaf-token-value token))
+                        :value (parseclj-lex--leaf-token-value token))
      stack)))
 
 (defun parseclj-ast--reduce-leaf-with-lexical-preservation (stack token options)

@@ -36,53 +36,7 @@
 ;; don't have the right forms.
 
 (require 'a)
-(require 'parseclj-lex)
-
-(defun parseedn--string (s)
-  ""
-  (replace-regexp-in-string
-   "\\\\o[0-8]\\{3\\}"
-   (lambda (x)
-     (make-string 1 (string-to-number (substring x 2) 8) ))
-   (replace-regexp-in-string
-    "\\\\u[0-9a-fA-F]\\{4\\}"
-    (lambda (x)
-      (make-string 1 (string-to-number (substring x 2) 16)))
-    (replace-regexp-in-string "\\\\[tbnrf'\"\\]"
-                              (lambda (x)
-                                (cl-case (elt x 1)
-                                  (?t "\t")
-                                  (?f "\f")
-                                  (?\" "\"")
-                                  (?r "\r")
-                                  (?n "\n")
-                                  (?\\ "\\\\")
-                                  (t (substring x 1))))
-                              (substring s 1 -1)))))
-
-(defun parseedn--character (c)
-  "Parse a EDN character C into an Emacs Lisp character."
-  (let ((first-char (elt c 1)))
-    (cond
-     ((equal c "\\newline") ?\n)
-     ((equal c "\\return") ?\r)
-     ((equal c "\\space") ?\ )
-     ((equal c "\\tab") ?\t)
-     ((eq first-char ?u) (string-to-number (substring c 2) 16))
-     ((eq first-char ?o) (string-to-number (substring c 2) 8))
-     (t first-char))))
-
-(defun parseedn--leaf-token-value (token)
-  "Parse the given leaf TOKEN to an Emacs Lisp value."
-  (cl-case (parseclj-lex-token-type token)
-    (:number (string-to-number (alist-get :form token)))
-    (:nil nil)
-    (:true t)
-    (:false nil)
-    (:symbol (intern (alist-get :form token)))
-    (:keyword (intern (alist-get :form token)))
-    (:string (parseedn--string (alist-get :form token)))
-    (:character (parseedn--character (alist-get :form token)))))
+(require 'parseclj-parser)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Reader
@@ -105,7 +59,7 @@ OPTIONS is an association list.  See `parseclj-parse' for more information
 on available options."
   (if (member (parseclj-lex-token-type token) (list :whitespace :comment))
       stack
-    (cons (parseedn--leaf-token-value token) stack)))
+    (cons (parseclj-lex--leaf-token-value token) stack)))
 
 (defun parseedn-reduce-branch (stack opening-token children options)
   "Reduce STACK with an sequence containing a collection of other elisp values.
@@ -147,9 +101,9 @@ Returns an Emacs Lisp value.
 TAG-READERS is an optional association list where keys are symbols
 identifying *tags*, and values are tag handler functions that receive one
 argument: *the tagged element*, and specify how to interpret it."
-  (parseclj-parse #'parseedn-reduce-leaf
-                  #'parseedn-reduce-branch
-                  (a-list :tag-readers tag-readers)))
+  (parseclj-parser #'parseedn-reduce-leaf
+                   #'parseedn-reduce-branch
+                   (a-list :tag-readers tag-readers)))
 
 (defun parseedn-read-str (s &optional tag-readers)
   "Parse string S as EDN.
