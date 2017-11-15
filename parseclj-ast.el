@@ -111,10 +111,11 @@ on available options."
     (cl-case type
       (:root (cons (parseclj-ast-node :root pos :children children) stack))
       (:discard stack)
-      (:tag (list (parseclj-ast-node :tag
+      (:tag (cons (parseclj-ast-node :tag
                                      pos
                                      :tag (intern (substring (a-get opening-token :form) 1))
-                                     :children children)))
+                                     :children children)
+                  stack))
       (t (cons
           (parseclj-ast-node type pos :children children)
           stack)))))
