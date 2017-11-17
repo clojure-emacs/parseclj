@@ -44,13 +44,29 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs."
        (consp (car node))
        (eq :node-type (caar node))))
 
+(defun parseclj-ast-node-attr (node attr)
+  "Return NODE's ATTR, or nil."
+  (a-get node attr))
+
 (defun parseclj-ast-node-type (node)
   "Return the type of the AST node NODE."
   (a-get node :node-type))
 
+(defun parseclj-ast-children (node)
+  "Return children for the AST NODE."
+  (a-get node :children))
+
+(defun parseclj-ast-value (node)
+  "Return the value of NODE as another AST node."
+  (a-get node :value))
+
 (defun parseclj-ast-leaf-node-p (node)
   "Return t if the given ast NODE is a leaf node."
   (member (parseclj-ast-node-type node) parseclj-lex--leaf-tokens))
+
+(defun parseclj-ast-branch-node-p (node)
+  "Return t if the given AST NODE is a branch node."
+  (not (parseclj-ast-leaf-node-p node)))
 
 
 ;; Parse/reduce strategy functions
