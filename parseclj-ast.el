@@ -55,7 +55,7 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs."
 
 ;; Parse/reduce strategy functions
 
-(defun parseclj-ast--reduce-leaf (stack token &optional options)
+(defun parseclj-ast--reduce-leaf (stack token &optional _options)
   "Put into the STACK an AST leaf node based on TOKEN.
 Ignores white spaces and comments.
 
@@ -92,7 +92,7 @@ on available options."
                 stack))
       (parseclj-ast--reduce-leaf stack token options))))
 
-(defun parseclj-ast--reduce-branch (stack opening-token children options)
+(defun parseclj-ast--reduce-branch (stack opening-token children _options)
   "Reduce STACK with an AST branch node representing a collection of elements.
 Ignores discard tokens.
 
