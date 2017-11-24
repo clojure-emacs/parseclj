@@ -114,6 +114,15 @@
     (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\c" 30))))
 
   (with-temp-buffer
+    (insert "\\u \\v \\w")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\u" 1)))
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :whitespace " " 3)))
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\v" 4)))
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :whitespace " " 6)))
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\w" 7))))
+
+  (with-temp-buffer
     (insert "\\u0078\\o170")
     (goto-char 1)
     (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\u0078" 1)))
