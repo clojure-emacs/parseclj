@@ -68,58 +68,34 @@
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "foo]")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 4, unmatched :rbracket"))
+             (parseclj-parser-error (cadr errdata)))
+           "At position 4, unmatched :rbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "[foo")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 1, unmatched :lbracket"))
+             (parseclj-parser-error (cadr errdata)))
+           "At position 1, unmatched :lbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "(1 2 [ 4)")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 6, unmatched :lbracket"))
+             (parseclj-parser-error (cadr errdata)))
+           "At position 6, unmatched :lbracket"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "1 2 #_")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 5, unmatched :discard"))
+             (parseclj-parser-error (cadr errdata)))
+           "At position 5, unmatched :discard"))
 
   (should (equal
            (condition-case errdata
                (parseclj-parse-clojure "(1 [2 {3 ( 4}])")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 10, unmatched :lparen")))
+             (parseclj-parser-error (cadr errdata)))
+           "At position 10, unmatched :lparen")))
 
-(ert-deftest parseclj-parse-clojure-fail-fast-test ()
-  (should (equal
-           (condition-case errdata
-               (parseclj-parse-clojure "foo]")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 4, unmatched :rbracket"))
-
-  (should (equal
-           (condition-case errdata
-               (parseclj-parse-clojure "[foo")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 1, unmatched :lbracket"))
-
-  (should (equal
-           (condition-case errdata
-               (parseclj-parse-clojure "(1 2 [ 4)")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 6, unmatched :lbracket"))
-
-  (should (equal
-           (condition-case errdata
-               (parseclj-parse-clojure "1 2 #_")
-             (parseclj-parse-error (cadr errdata)))
-           "parseclj: Syntax Error at position 5, unmatched :discard"))
-
+(ert-deftest parseclj-parse-clojure-not-fail-fast-test ()
   (should (equal (parseclj-parse-clojure "(1 [2 {3 ( 4}])" :fail-fast nil)
                  '((:node-type . :root)
                    (:position . 1)
@@ -217,7 +193,7 @@
                   (parseclj-lex-token :discard "#_" 30)
                   (parseclj-ast-node :comment 20))
             (lambda (e)
-              (and (parseclj-ast-node? e)
+              (and (parseclj-ast-node-p e)
                    (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))
             '(:discard))
            '(((:token-type . :discard) (:form . "#_") (:pos . 30))
@@ -231,7 +207,7 @@
                   (parseclj-lex-token :discard "#_" 30)
                   (parseclj-ast-node :comment 20))
             (lambda (e)
-              (and (parseclj-ast-node? e)
+              (and (parseclj-ast-node-p e)
                    (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))
             '(:discard))
            nil)))
@@ -240,7 +216,7 @@
   (let ((stack '(((:node-type . :number) (:position . 3) (:form . "4") (:value . 4))
                  ((:token-type . :discard) (:form . "#_") (:pos . 1))))
         (value-p (lambda (e)
-                   (and (parseclj-ast-node? e)
+                   (and (parseclj-ast-node-p e)
                         (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))))
     (should (equal (parseclj--take-value stack value-p)
                    '(((:node-type . :number) (:position . 3) (:form . "4") (:value . 4)))))
@@ -256,7 +232,7 @@
   (let ((stack '(((:node-type . :whitespace) (:position . 3) (:form . " "))
                  ((:token-type . :discard) (:form . "#_") (:pos . 1))))
         (value-p (lambda (e)
-                   (and (parseclj-ast-node? e)
+                   (and (parseclj-ast-node-p e)
                         (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard)))))))
 
     (let* ((top-value (parseclj--take-value stack value-p))

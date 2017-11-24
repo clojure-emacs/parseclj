@@ -1,2 +1,8 @@
-((nil .
-  ((buffer-save-without-query . t))))
+((emacs-lisp-mode
+  (buffer-save-without-query . t)
+  (eval . (flycheck-mode))
+  (eval . (checkdoc-minor-mode))
+  (sentence-end-double-space . t)
+  (emacs-lisp-docstring-fill-column . 75)
+  (checkdoc-package-keywords-flag)
+  (checkdoc-arguments-in-order-flag)))
