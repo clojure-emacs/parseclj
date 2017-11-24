@@ -114,17 +114,6 @@
     (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\c" 30))))
 
   (with-temp-buffer
-    (insert "\\newline\\return\\space\\tab\\a\\b\\c")
-    (goto-char 1)
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\newline" 1)))
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\return" 9)))
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\space" 16)))
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\tab" 22)))
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\a" 26)))
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\b" 28)))
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\c" 30))))
-
-  (with-temp-buffer
     (insert "\\u0078\\o170")
     (goto-char 1)
     (should (equal (parseclj-lex-next) (parseclj-lex-token :character "\\u0078" 1)))
