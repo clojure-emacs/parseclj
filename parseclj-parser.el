@@ -203,15 +203,21 @@ functions. Additionally the following options are recognized
        (t (push token stack)))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
-      (let* ((top-value (parseclj--take-value stack value-p))
-             (opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
-             (new-stack (nthcdr (+ (length top-value) (length opening-token)) stack)))
-        (when (and top-value opening-token)
+      (let (top-value
+            opening-token
+            new-stack)
+        (setq top-value (parseclj--take-value stack value-p))
+        (setq opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
+        (while (and top-value opening-token)
           ;; (message "Reducing...")
           ;; (message "  - STACK %S" stack)
-          ;; (message "  - OPENING_TOKEN %S" opening-token)
-          ;; (message "  - TOP_VALUE %S\n" top-value)
-          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value) options))))
+          ;; (message "  - OPENING-TOKEN %S" opening-token)
+          ;; (message "  - TOP-VALUE %S" top-value)
+          (setq new-stack (nthcdr (+ (length top-value) (length opening-token)) stack))
+          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value) options))
+
+          (setq top-value (parseclj--take-value stack value-p))
+          (setq opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))))
 
       (setq token (parseclj-lex-next)))
 
