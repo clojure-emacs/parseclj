@@ -275,7 +275,7 @@
                                              (:value . 12)))))))))
 
 
-       "tag"
+       "tag-1"
        (a-list
         :source "#foo/bar [1]"
         :ast '((:node-type . :root)
@@ -290,7 +290,7 @@
                                                             (:form . "1")
                                                             (:value . 1))))))))))))
 
-       "nested-tag"
+       "tag-2"
        (a-list
         :source "(fn #param :param-name 1)"
         :ast '((:node-type . :root)
@@ -312,6 +312,30 @@
                                              (:position . 24)
                                              (:form . "1")
                                              (:value . 1)))))))))
+
+       "nested-tags"
+       (a-list
+        :source "[#lazy-error #error {:cause \"Divide by zero\"}]"
+        :ast '((:node-type . :root)
+               (:position . 1)
+               (:children ((:node-type . :vector)
+                           (:position . 1)
+                           (:children ((:node-type . :tag)
+                                       (:position . 2)
+                                       (:tag . lazy-error)
+                                       (:children ((:node-type . :tag)
+                                                   (:position . 14)
+                                                   (:tag . error)
+                                                   (:children ((:node-type . :map)
+                                                               (:position . 21)
+                                                               (:children ((:node-type . :keyword)
+                                                                           (:position . 22)
+                                                                           (:form . ":cause")
+                                                                           (:value . :cause))
+                                                                          ((:node-type . :string)
+                                                                           (:position . 29)
+                                                                           (:form . "\"Divide by zero\"")
+                                                                           (:value . "Divide by zero")))))))))))))
 
        "booleans"
        (a-list

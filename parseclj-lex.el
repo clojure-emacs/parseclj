@@ -297,11 +297,11 @@ token is returned."
       (right-char 7)
       (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
-     ((equal (char-after (point)) ?u)
+     ((string-match-p "^u[0-9a-fA-F]\\{4\\}" (parseclj-lex-lookahead 5))
       (right-char 5)
       (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
-     ((equal (char-after (point)) ?o)
+     ((string-match-p "^o[0-8]\\{3\\}" (parseclj-lex-lookahead 4))
       (right-char 4)
       (parseclj-lex-token :character (buffer-substring-no-properties pos (point)) pos))
 
