@@ -203,11 +203,9 @@ functions. Additionally the following options are recognized
        (t (push token stack)))
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
-      (let (top-value
-            opening-token
-            new-stack)
-        (setq top-value (parseclj--take-value stack value-p))
-        (setq opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
+      (let* ((top-value (parseclj--take-value stack value-p))
+             (opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
+             new-stack)
         (while (and top-value opening-token)
           ;; (message "Reducing...")
           ;; (message "  - STACK %S" stack)
