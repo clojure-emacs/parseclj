@@ -218,7 +218,7 @@ A token is an association list with :token-type as its first key."
   "Return t if CHAR is a valid start for a symbol.
 
 Symbols begin with a non-numeric character and can contain alphanumeric
-characters and . * + ! - _ ? $ % & = < >.  If - + or . are the first
+characters and . * + ! - _ ? $ % & = < > '.  If - + or . are the first
 character, the second character (if any) must be non-numeric.
 
 In some cases, like in tagged elements, symbols are required to start with
@@ -226,7 +226,7 @@ alphabetic characters only.  ALPHA-ONLY ensures this behavior."
   (not (not (and char
                  (or (and (<= ?a char) (<= char ?z))
                      (and (<= ?A char) (<= char ?Z))
-                     (and (not alpha-only) (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/))))))))
+                     (and (not alpha-only) (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/ ?'))))))))
 
 (defun parseclj-lex-symbol-rest-p (char)
   "Return t if CHAR is a valid character in a symbol.

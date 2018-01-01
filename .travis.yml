@@ -1,5 +1,6 @@
 language: generic
 dist: trusty
+group: deprecated-2017Q4
 env:
   - EMACS=emacs25
   - EMACS=emacs-snapshot
