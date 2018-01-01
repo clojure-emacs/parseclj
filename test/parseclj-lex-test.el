@@ -93,6 +93,11 @@
     (should (equal (parseclj-lex-next) '((:token-type . :symbol) (:form . "foo#") (:pos . 1)))))
 
   (with-temp-buffer
+    (insert "foo'")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) '((:token-type . :symbol) (:form . "foo'") (:pos . 1)))))
+
+  (with-temp-buffer
     (insert "#inst")
     (goto-char 1)
     (should (equal (parseclj-lex-next) '((:token-type . :tag) (:form . "#inst") (:pos . 1)))))
@@ -137,6 +142,11 @@
     (insert ":hello-world")
     (goto-char 1)
     (should (equal (parseclj-lex-next) (parseclj-lex-token :keyword ":hello-world" 1))))
+
+  (with-temp-buffer
+    (insert ":hello-world'")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :keyword ":hello-world'" 1))))
 
   (with-temp-buffer
     (insert ":hello/world")
