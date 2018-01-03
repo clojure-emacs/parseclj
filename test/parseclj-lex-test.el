@@ -283,7 +283,7 @@
   (with-temp-buffer
     (insert "\"abc")
     (goto-char 1)
-    (should (equal (parseclj-lex-string) (parseclj-lex-token :lex-error "\"abc" 1))))
+    (should (equal (parseclj-lex-string) (parseclj-lex-token :lex-error "\"abc" 1 :error-type :invalid-string))))
 
   (with-temp-buffer
     (insert "\"abc\\\"\"")"abc\""
