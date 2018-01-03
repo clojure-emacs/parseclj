@@ -203,7 +203,12 @@
     (should (equal (parseclj-lex-next) (parseclj-lex-token :number "13" 18)))
     (should (equal (parseclj-lex-next) (parseclj-lex-token :whitespace " " 20)))
     (should (equal (parseclj-lex-next) (parseclj-lex-token :number "14" 21)))
-    (should (equal (parseclj-lex-next) (parseclj-lex-token :rparen ")" 23)))))
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :rparen ")" 23))))
+
+  (with-temp-buffer
+    (insert "~")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :lex-error "~" 1)))))
 
 (ert-deftest parseclj-lex-test-at-number-p ()
   (dolist (str '("123" ".9" "+1" "0" "-456"))
