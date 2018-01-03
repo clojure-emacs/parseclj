@@ -420,7 +420,7 @@ See `parseclj-lex-token'."
             (parseclj-lex-error-token pos :invalid-hashtag-dispatcher)))))
 
        (t
-        (concat ":(" (char-to-string char)))))))
+        (parseclj-lex-error-token pos))))))
 
 (provide 'parseclj-lex)
 
