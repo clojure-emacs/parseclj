@@ -61,8 +61,6 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs."
   "Create a lexer error token starting at POS.
 ERROR-TYPE is an optional keyword to attach to the created token,
 as the means for providing more information on the error."
-  (when (= pos (point))
-    (right-char))
   (apply #'parseclj-lex-token
          :lex-error
          (buffer-substring-no-properties pos (point))
@@ -420,7 +418,9 @@ See `parseclj-lex-token'."
             (parseclj-lex-error-token pos :invalid-hashtag-dispatcher)))))
 
        (t
-        (parseclj-lex-error-token pos))))))
+        (progn
+          (right-char)
+          (parseclj-lex-error-token pos)))))))
 
 (provide 'parseclj-lex)
 
