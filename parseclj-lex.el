@@ -57,6 +57,17 @@ Tokens at a mimimum have these attributes
 Other ATTRIBUTES can be given as a flat list of key-value pairs."
   (apply 'a-list :token-type type :form form :pos pos attributes))
 
+(defun parseclj-lex-error-token (pos &optional error-type)
+  "Create a lexer error token starting at POS.
+ERROR-TYPE is an optional keyword to attach to the created token,
+as the means for providing more information on the error."
+  (apply #'parseclj-lex-token
+         :lex-error
+         (buffer-substring-no-properties pos (point))
+         pos
+         (when error-type
+           (list :error-type error-type))))
+
 (defun parseclj-lex-token-p (token)
   "Is the given TOKEN a parseclj-lex TOKEN.
 
@@ -193,11 +204,7 @@ A token is an association list with :token-type as its first key."
                         (and (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?& ?= ?< ?> ?/)))))
           (progn
             (right-char)
-            (parseclj-lex-token :lex-error
-                                (buffer-substring-no-properties pos (point))
-                                pos
-                                :error-type :invalid-number-format))
-
+            (parseclj-lex-error-token pos :invalid-number-format))
         (parseclj-lex-token :number
                             (buffer-substring-no-properties pos (point))
                             pos)))))
@@ -270,7 +277,7 @@ token is returned."
         (progn
           (right-char)
           (parseclj-lex-token :string (buffer-substring-no-properties pos (point)) pos))
-      (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos))))
+      (parseclj-lex-error-token pos :invalid-string))))
 
 (defun parseclj-lex-lookahead (n)
   "Return a lookahead string of N characters after point."
@@ -322,7 +329,7 @@ See `parseclj-lex-symbol', `parseclj-lex-symbol-start-p'."
     (if (equal (char-after (point)) ?:) ;; three colons in a row => lex-error
         (progn
           (right-char)
-          (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos :error-type :invalid-keyword))
+          (parseclj-lex-error-token pos :invalid-keyword))
       (progn
         (while (or (parseclj-lex-symbol-rest-p (char-after (point)))
                    (equal (char-after (point)) ?#))
@@ -408,10 +415,12 @@ See `parseclj-lex-token'."
             (while (not (or (parseclj-lex-at-whitespace-p)
                             (parseclj-lex-at-eof-p)))
               (right-char))
-            (parseclj-lex-token :lex-error (buffer-substring-no-properties pos (point)) pos :error-type :invalid-hashtag-dispatcher)))))
+            (parseclj-lex-error-token pos :invalid-hashtag-dispatcher)))))
 
        (t
-        (concat ":(" (char-to-string char)))))))
+        (progn
+          (right-char)
+          (parseclj-lex-error-token pos)))))))
 
 (provide 'parseclj-lex)
 
