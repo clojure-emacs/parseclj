@@ -6,6 +6,6 @@ WIP
 
 ## License
 
-&copy; 2017 Arne Brasseur
+&copy; 2017-2018 Arne Brasseur
 
 Distributed under the terms of the GNU General Public License 3.0 or later. See LICENSE.

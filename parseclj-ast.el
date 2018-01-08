@@ -1,6 +1,6 @@
 ;;; parseclj-ast.el --- Clojure parser/unparser              -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017  Arne Brasseur
+;; Copyright (C) 2017-2018  Arne Brasseur
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 

@@ -1,6 +1,6 @@
 ;;; parseclj-ast-test.el --- Unit tests for AST parsing/unparsing
 
-;; Copyright (C) 2017  Arne Brasseur
+;; Copyright (C) 2017-2018  Arne Brasseur
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
 
