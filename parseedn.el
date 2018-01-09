@@ -52,7 +52,7 @@ is not recommended you change this variable, as this globally
 changes the behavior of the EDN reader.  Instead pass your own
 handlers as an optional argument to the reader functions.")
 
-(defun parseedn-reduce-leaf (stack token options)
+(defun parseedn-reduce-leaf (stack token _options)
   "Put in the STACK an elisp value representing TOKEN.
 
 OPTIONS is an association list.  See `parseclj-parse' for more information
