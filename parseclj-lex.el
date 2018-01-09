@@ -93,11 +93,18 @@ A token is an association list with :token-type as its first key."
 ;; Elisp values from tokens
 
 (defun parseclj-lex--string-value (s)
-  ""
+  "Parse an EDN string S into a regular string.
+S goes through three transformations:
+- Escaped characters in S are transformed into Elisp escaped
+  characters.
+- Unicode escaped characters are decoded into its corresponding
+  unicode character counterpart.
+- Octal escaped characters are decoded into its corresponding
+  character counterpart."
   (replace-regexp-in-string
    "\\\\o[0-8]\\{3\\}"
    (lambda (x)
-     (make-string 1 (string-to-number (substring x 2) 8) ))
+     (make-string 1 (string-to-number (substring x 2) 8)))
    (replace-regexp-in-string
     "\\\\u[0-9a-fA-F]\\{4\\}"
     (lambda (x)
@@ -115,7 +122,7 @@ A token is an association list with :token-type as its first key."
                               (substring s 1 -1)))))
 
 (defun parseclj-lex--character-value (c)
-  "Parse a EDN character C into an Emacs Lisp character."
+  "Parse an EDN character C into an Emacs Lisp character."
   (let ((first-char (elt c 1)))
     (cond
      ((equal c "\\newline") ?\n)
