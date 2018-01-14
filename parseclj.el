@@ -68,7 +68,7 @@ key-value pairs to specify parsing options.
   "Parse Clojure AST to source code.
 
 Given an abstract syntax tree AST (as returned by
-parseclj-parse-clojure), turn it back into source code, and
+`parseclj-parse-clojure'), turn it back into source code, and
 insert it into the current buffer."
   (if (parseclj-ast-leaf-node-p ast)
       (insert (a-get ast :form))
@@ -80,7 +80,7 @@ insert it into the current buffer."
   "Parse Clojure AST to a source code string.
 
 Given an abstract syntax tree AST (as returned by
-parseclj-parse-clojure), turn it back into source code, and
+`parseclj-parse-clojure'), turn it back into source code, and
 return it as a string"
   (with-temp-buffer
     (parseclj-unparse-clojure ast)
