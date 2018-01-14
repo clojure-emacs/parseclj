@@ -44,8 +44,8 @@ key-value pairs to specify parsing options.
 
 - `:lexical-preservation' Retain whitespace, comments, and
   discards.  Defaults to nil.
-- `:fail-fast' Raise an error
-  when encountering invalid syntax.  Defaults to t."
+- `:fail-fast' Raise an error when encountering invalid syntax.
+  Defaults to t."
   (if (stringp (car string-and-options))
       (with-temp-buffer
         (insert (car string-and-options))
