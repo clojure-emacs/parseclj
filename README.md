@@ -2,24 +2,135 @@
 
 # EDN reader and Clojure parser for Emacs Lisp
 
-`parseclj` is an Emacs Lisp library for parsing Clojure code and EDN data. It
-supports several input and output formats, all powered by the same shift-reduce
-parser function.
+`parseclj` is an Emacs Lisp library for parsing Clojure code and [EDN
+data](https://github.com/edn-format/edn). It supports several input and output
+formats, all powered by the same shift-reduce parser function.
 
 Take a look at the [design document](DESIGN.md) for more details.
 
-`parseclj` is in **alpha** state right now.
+`parseclj` is in **alpha** state right now, its API might be subject to change.
 
 ## Installation
 
-TODO
+Currently `parseclj` is not part of [MELPA](http://melpa.milkbox.net/), so
+the best way to install it is by getting your own copy of the `parseclj` repo
+and putting it somewhere in your Emacs
+[`load-path`](https://www.emacswiki.org/emacs/LoadPath).
+
+You can just copy-paste this code into your Emacs init file:
+
+```emacs-lisp
+(add-to-list 'load-path "/path/to/your/copy/of/parseclj/")
+```
 
 ## Usage
 
-TODO
+`parseclj` is actually a compound of two libraries:
+
+- `parseedn`: An EDN reader that transforms EDN to Emacs Lisp data structures.
+- `parseclj`: A Clojure parser that returns an
+  [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree) that, for example,
+  given as input `(1 2 [:a :b :c])`, it looks like this:
+
+``` emacs-lisp
+((:node-type . :root)
+ (:position . 1)
+ (:children ((:node-type . :list)
+             (:position . 1)
+             (:children ((:node-type . :number)
+                         (:position . 2)
+                         (:form . "1")
+                         (:value . 1))
+                        ((:node-type . :number)
+                         (:position . 4)
+                         (:form . "2")
+                         (:value . 2))
+                        ((:node-type . :vector)
+                         (:position . 6)
+                         (:children ((:node-type . :keyword)
+                                     (:position . 7)
+                                     (:form . ":a")
+                                     (:value . :a))
+                                    ((:node-type . :keyword)
+                                     (:position . 10)
+                                     (:form . ":b")
+                                     (:value . :b))
+                                    ((:node-type . :keyword)
+                                     (:position . 13)
+                                     (:form . ":c")
+                                     (:value . :c))))))))
+```
+
+In order to use any of them, you first need to require it:
+
+```emacs-lisp
+(require 'parseclj)
+;; or...
+(require 'parseedn)
+```
+
+And then you will have the following functions at your disposal:
+
+### parseclj
+
+- `parseclj-parse-clojure` &rest string-and-options
+
+    When no arguments, parses Clojure source code into an AST and returns it.
+    When given a string as a first argument, parses it and returns the
+    corresponding AST.
+
+    A list of options can be passed down to the parsing process, particularly:
+    * `:lexical-preservation`: a boolean value to retain whitespace, comments,
+      and discards.  Defaults to nil.
+    * `:fail-fast`: a boolean value to raise an error when encountering invalid
+      syntax.  Defaults to t.
+
+    Examples:
+
+   ```emacs-lisp
+   (parseclj-parse-clojure) ;; will parse clojure code in the current buffer and return an AST
+   (parseclj-parse-clojure "(1 2 3)")  ;; => ((:node-type . :root) ... )
+   (parseclj-parse-clojure :lexical-preservation t) ;; will parse clojure code in current buffer preserving whitespaces, comments and discards
+   ```
+
+    > Note: there's an open issue to extend this API to [parse clojure code within
+    > some boundaries of a
+    > buffer](https://github.com/clojure-emacs/parseclj/issues/13).  Pull requests
+    > are welcome.
+
+- `parseclj-unparse-clojure` ast
+
+    Transform the given AST into Clojure source code and inserts it into the
+    current buffer.
+
+- `parseclj-unparse-clojure-to-string` ast
+
+    Transfrom the given AST into Clojure source code and returns it as a string.
+
+### parseedn
+
+- `parseedn-read`
+
+    Read content from the current buffer as EDN and transforms it into an Emacs
+    Lisp value.
+
+- `parseedn-read-str` str
+
+    Read STR as EDN and transfroms it into an Emacs Lisp value.
+
+- `parseedn-print` datum
+
+    Inserts DATUM as EDN Into the current buffer.  DATUM can be any Emacs Lisp
+    value.
+
+- `parseedn-print-str` datum
+
+    Returns a string containing DATUM as EDN.  DATUM can be any Emacs Lisp
+    value.
 
 ## License
 
 &copy; 2017-2018 Arne Brasseur
 
-Distributed under the terms of the GNU General Public License 3.0 or later. See LICENSE.
+Distributed under the terms of the GNU General Public License 3.0 or later. See
+[LICENSE](LICENSE).
