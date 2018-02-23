@@ -29,7 +29,6 @@
 
 (require 'subr-x)
 (require 'parseclj-lex)
-(require 'parseedn)
 
 ;; AST helper functions
 
