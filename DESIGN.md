@@ -1,8 +1,8 @@
 # parseclj Design Goals / Roadmap
 
-parseclj is an Emacs Lisp library for parsing Clojure code and EDN data. It
-supports several input and output formats, all powered by the same shift-reduce
-parser function.
+parseclj is an Emacs Lisp library for parsing Clojure code and [EDN
+data](https://github.com/edn-format/edn). It supports several input and output
+formats, all powered by the same shift-reduce parser function.
 
 This documents describes the design goals for parseclj, and as such may describe features which are not implemented yet.
 
@@ -39,7 +39,7 @@ On the other hand Emacs supports strings/buffers with arbitrary encoding, on the
 
 ## Architecture
 
-The implementation is implemented in three parts: a lexer, a parser, and multiple reducers.
+The implementation is implemented in three parts: a lexer, a parser, and [multiple reducers](#multiple-reducers).
 
 ### Lexer
 
@@ -214,7 +214,17 @@ Unmatched closing delimiter:
 
 In many cases it will be desirable to "fail fast", and raise an error as soon as a syntax error is encountered. A `reduce-branch` function can do so if it wishes by checking its input sequence for raw tokens, and raising an error if any are present.
 
-## EDN vs Clojure
+## Multiple Reducers
+
+While the shift-reduce parser parses input, it reduces parsed values (leafs tokens and collections) using "reducing functions".  These functions are in charge of giving actual meaning to the parsed data.
+
+Currently, there are two sets of reducing functions implemented: one set that reduces parsed values to AST data structures, and another one that reduces to Emacs Lisp values.
+
+The AST reducing functions are part of [`parseclj`](https://github.com/clojure-emacs/parseclj), while the Emacs Lisp reducing functions are separated into a differente package called [`parseedn`](https://github.com/clojure-emacs/parseedn).
+
+To understand why these two set of reducing functions are separated, it's important to look at the difference between EDN and Clojure, and also between Emacs Lisp elements and EDN elements.
+
+### EDN vs Clojure
 
 EDN syntax is a subset of Clojure syntax used for representing data (as opposed to code).
 
@@ -223,7 +233,7 @@ Several constructs that are common in Clojure code are not valid in EDN. This in
 - quoting, syntax quoting, syntax quote splicing, etc.
 - read time evaluation with `#=(,,,)`
 
-## Dealing with tagged literals
+### Dealing with tagged literals
 
 EDN/Clojure syntax is extensible. Values can be prefixed with user-provided tags, which indicates they need to be transformed after reading by a registered handler function.
 
@@ -233,7 +243,7 @@ The EDN parser functions will take an optional tag handler function. This functi
 
 When parsing code to an AST the situation is different, here tags simply become part of the AST, without caring about their semantics.
 
-## Representing EDN as Emacs Lisp values
+### Representing EDN as Emacs Lisp values
 
 See also the section at the top regarding differences between Clojure's data types vs those available in Emacs Lisp.
 
@@ -246,11 +256,11 @@ These are the choices that the edn.el library has made:
 - represent characters as integers, *but* parse `\newline` `\return` `\space` and `\tab` as the symbols `'newline` `'return` etc.
 - parse `true` as `t`, `nil` and `false` as `nil`.
 
-### Differences with EDN.el
+#### Differences with EDN.el
 
 At the moment the `parseedn-*` copy the parsing behavior of edn.el, *except* that the character literals `\newline`, `\return`, `\space`, and `\tab` are parsed to their character code (10, 13, 32, and 9 respectively), instead of to symbols.
 
-## AST
+### AST
 
 An AST (abstract syntax tree) is a tree structure made up of nodes. A node looks like this
 
@@ -273,6 +283,8 @@ Nodes are an alist with `:node-type` as the first key and a `:position`. Leaf no
 Non-leaf nodes contain a list of `:children`.
 
 ## Public API
+
+> Disclaimer: outdated information -- this API has been deprecated in favor of [Alternative Package Layout](#alternative-package-layout), and it's only kept here for historical purposes.
 
 parseclj provides three "parse modes"
 
@@ -432,7 +444,7 @@ corresponding type in Emacs. `nil' and `false' form a
 particularly poignant case, both are converted to `nil'.")
 ```
 
-**Package**: parseedn
+**Package**: [parseedn](https://github.com/clojure-emacs/parseedn)
 
 - file: parseedn.el
 
