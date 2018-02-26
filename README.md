@@ -62,8 +62,6 @@ In order to use any of these functions, you first need to require it:
 
 ```emacs-lisp
 (require 'parseclj)
-;; or...
-(require 'parseedn)
 ```
 
 And then you will have the following functions at your disposal:
