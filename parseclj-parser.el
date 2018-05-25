@@ -235,7 +235,7 @@ functions. Additionally the following options are recognized
              new-stack)
         (while (and top-value-1 top-value-2 opening-token)
           (setq new-stack (nthcdr (apply #'+ (mapcar #'length (list top-value-1 top-value-2 opening-token))) stack))
-          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value-1 top-value-2) options))
+          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value-2 top-value-1) options))
 
           ;; recur
           (setq top-value-1 (parseclj--take-value stack value-p))
