@@ -252,6 +252,18 @@
                                      (:form . "foo")
                                      (:value . foo)))))))))
 
+(ert-deftest parseclj--parse-namespaced-map-test ()
+  (should (equal
+           (parseclj-parse-clojure "#:foo.bar{}")
+           '((:node-type . :root)
+             (:position . 1)
+             (:children ((:map-prefix . ((:token-type . :map-prefix)
+                                         (:form . "#:foo.bar")
+                                         (:pos . 1)))
+                         (:node-type . :map)
+                         (:position . 10)
+                         (:children)))))))
+
 (ert-deftest parseclj--take-token-test ()
   (should (equal
            (parseclj--take-token

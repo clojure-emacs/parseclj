@@ -54,7 +54,8 @@
                                       :reader-conditional
                                       :reader-conditional-splice
                                       :var
-                                      :deref)
+                                      :deref
+                                      :map-prefix)
   "Tokens that modify the form that follows.")
 
 (defvar parseclj-lex--prefix-2-tokens '(:metadata)
@@ -406,6 +407,16 @@ See `parseclj-lex-symbol', `parseclj-lex-symbol-start-p'."
       (right-char))
     (parseclj-lex-token :comment (buffer-substring-no-properties pos (point)) pos)))
 
+(defun parseclj-lex-map-prefix ()
+  "Return a lex token representing a map prefix."
+  (let ((pos (1- (point))))
+    (right-char)
+    (when (equal (char-after (point)) ?:)
+      (right-char))
+    (while (parseclj-lex-symbol-rest-p (char-after (point)))
+      (right-char))
+    (parseclj-lex-token :map-prefix (buffer-substring-no-properties pos (point)) pos)))
+
 (defun parseclj-lex-next ()
   "Consume characters at point and return the next lexical token.
 
@@ -448,7 +459,7 @@ See `parseclj-lex-token'."
 
        ((equal char ?`)
         (right-char)
-        (parseclj-lex-token :backquote "'" pos))
+        (parseclj-lex-token :backquote "`" pos))
 
        ((equal char ?~)
         (right-char)
@@ -502,6 +513,8 @@ See `parseclj-lex-token'."
             (parseclj-lex-token :var "#'" pos))
            ((equal char ?\")
             (parseclj-lex-regex))
+           ((equal char ?:)
+            (parseclj-lex-map-prefix))
            ((equal char ?\?)
             (right-char)
             (if (eq ?@ (char-after (point)))

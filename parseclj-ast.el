@@ -137,6 +137,9 @@ on available options."
                                           pos
                                           :children children)
                        stack))
+      (:map-prefix (cons (a-assoc (car children)
+                                  :map-prefix opening-token)
+                         stack))
       (t (cons
           (parseclj-ast-node type pos :children children)
           stack)))))

@@ -326,6 +326,17 @@
     (goto-char 1)
     (should (equal (parseclj-lex-next) (parseclj-lex-token :tag "#foo/bar" 1)))))
 
+(ert-deftest parseclj-lex-test-quote ()
+  (with-temp-buffer
+    (insert "'foo")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :quote "'" 1))))
+
+  (with-temp-buffer
+    (insert "`foo")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) (parseclj-lex-token :backquote "`" 1)))))
+
 (provide 'parseclj-lex-test)
 
 ;;; parseclj-lex-test.el ends here
