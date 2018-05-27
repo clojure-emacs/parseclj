@@ -36,6 +36,7 @@
                                     :symbol
                                     :keyword
                                     :string
+                                    :regex
                                     :character)
   "Types of tokens that represent leaf nodes in the AST.")
 
@@ -43,6 +44,22 @@
                                        :rbracket
                                        :rbrace)
   "Types of tokens that mark the end of a non-atomic form.")
+
+(defvar parseclj-lex--prefix-tokens '(:quote
+                                      :backquote
+                                      :unquote
+                                      :unquote-splice
+                                      :discard
+                                      :tag
+                                      :reader-conditional
+                                      :reader-conditional-splice
+                                      :var
+                                      :deref
+                                      :map-prefix)
+  "Tokens that modify the form that follows.")
+
+(defvar parseclj-lex--prefix-2-tokens '(:metadata)
+  "Tokens that modify the two forms that follow.")
 
 ;; Token interface
 
@@ -81,6 +98,11 @@ A token is an association list with :token-type as its first key."
   (and (consp token)
        (cdr (assq :token-type token))))
 
+(defun parseclj-lex-token-form (token)
+  "Get the form of TOKEN."
+  (and (consp token)
+       (cdr (assq :form token))))
+
 (defun parseclj-lex-leaf-token-p (token)
   "Return t if the given AST TOKEN is a leaf node."
   (member (parseclj-lex-token-type token) parseclj-lex--leaf-tokens))
@@ -89,6 +111,9 @@ A token is an association list with :token-type as its first key."
   "Return t if the given ast TOKEN is a closing token."
   (member (parseclj-lex-token-type token) parseclj-lex--closing-tokens))
 
+(defun parseclj-lex-error-p (token)
+  "Return t if the TOKEN represents a lexing error token."
+  (eq (parseclj-lex-token-type token) :lex-error))
 
 ;; Elisp values from tokens
 
@@ -177,18 +202,32 @@ S goes through three transformations:
               (<= (char-after (point)) ?9))
     (right-char)))
 
+(defun parseclj-lex-skip-hex ()
+  "Skip all consecutive hex digits after point."
+  (while (and (char-after (point))
+              (or (<= ?0 (char-after (point)) ?9)
+                  (<= ?a (char-after (point)) ?f)
+                  (<= ?A (char-after (point)) ?F)))
+    (right-char)))
+
 (defun parseclj-lex-skip-number ()
   "Skip a number at point."
   ;; [\+\-]?\d+\.\d+
-  (when (member (char-after (point)) '(?+ ?-))
-    (right-char))
+  (if (and (eq ?0 (char-after (point)))
+           (eq ?x (char-after (1+ (point)))))
+      (progn
+        (right-char 2)
+        (parseclj-lex-skip-hex))
+    (progn
+      (when (member (char-after (point)) '(?+ ?-))
+        (right-char))
 
-  (parseclj-lex-skip-digits)
+      (parseclj-lex-skip-digits)
 
-  (when (eq (char-after (point)) ?.)
-    (right-char))
+      (when (eq (char-after (point)) ?.)
+        (right-char))
 
-  (parseclj-lex-skip-digits))
+      (parseclj-lex-skip-digits))))
 
 (defun parseclj-lex-number ()
   "Consume a number and return a `:number' token representing it."
@@ -270,21 +309,38 @@ are returned as their own lex tokens."
        ((equal sym "false") (parseclj-lex-token :false "false" pos))
        (t (parseclj-lex-token :symbol sym pos))))))
 
-(defun parseclj-lex-string ()
-  "Return a lex token representing a string.
-If EOF is reached without finding a closing double quote, a :lex-error
-token is returned."
+(defun parseclj-lex-string* ()
+  "Helper for string/regex lexing.
+Returns either the string, or an error token"
   (let ((pos (point)))
     (right-char)
     (while (not (or (equal (char-after (point)) ?\") (parseclj-lex-at-eof-p)))
       (if (equal (char-after (point)) ?\\)
           (right-char 2)
         (right-char)))
-    (if (equal (char-after (point)) ?\")
-        (progn
-          (right-char)
-          (parseclj-lex-token :string (buffer-substring-no-properties pos (point)) pos))
+    (when (equal (char-after (point)) ?\")
+      (right-char)
+      (buffer-substring-no-properties pos (point)))))
+
+(defun parseclj-lex-string ()
+  "Return a lex token representing a string.
+If EOF is reached without finding a closing double quote, a :lex-error
+token is returned."
+  (let ((pos (point))
+        (str (parseclj-lex-string*)))
+    (if str
+        (parseclj-lex-token :string str pos)
       (parseclj-lex-error-token pos :invalid-string))))
+
+(defun parseclj-lex-regex ()
+  "Return a lex token representing a regular expression.
+If EOF is reached without finding a closing double quote, a :lex-error
+token is returned."
+  (let ((pos (1- (point)))
+        (str (parseclj-lex-string*)))
+    (if str
+        (parseclj-lex-token :regex (concat "#" str) pos)
+      (parseclj-lex-error-token pos :invalid-regex))))
 
 (defun parseclj-lex-lookahead (n)
   "Return a lookahead string of N characters after point."
@@ -351,6 +407,16 @@ See `parseclj-lex-symbol', `parseclj-lex-symbol-start-p'."
       (right-char))
     (parseclj-lex-token :comment (buffer-substring-no-properties pos (point)) pos)))
 
+(defun parseclj-lex-map-prefix ()
+  "Return a lex token representing a map prefix."
+  (let ((pos (1- (point))))
+    (right-char)
+    (when (equal (char-after (point)) ?:)
+      (right-char))
+    (while (parseclj-lex-symbol-rest-p (char-after (point)))
+      (right-char))
+    (parseclj-lex-token :map-prefix (buffer-substring-no-properties pos (point)) pos)))
+
 (defun parseclj-lex-next ()
   "Consume characters at point and return the next lexical token.
 
@@ -387,6 +453,22 @@ See `parseclj-lex-token'."
         (right-char)
         (parseclj-lex-token :rbrace "}" pos))
 
+       ((equal char ?')
+        (right-char)
+        (parseclj-lex-token :quote "'" pos))
+
+       ((equal char ?`)
+        (right-char)
+        (parseclj-lex-token :backquote "`" pos))
+
+       ((equal char ?~)
+        (right-char)
+        (if (eq ?@ (char-after (point)))
+            (progn
+              (right-char)
+              (parseclj-lex-token :unquote-splice "~@" pos))
+          (parseclj-lex-token :unquote "~" pos)))
+
        ((parseclj-lex-at-number-p)
         (parseclj-lex-number))
 
@@ -405,6 +487,14 @@ See `parseclj-lex-token'."
        ((equal char ?\;)
         (parseclj-lex-comment))
 
+       ((equal char ?^)
+        (right-char)
+        (parseclj-lex-token :metadata "^" pos))
+
+       ((equal char ?@)
+        (right-char)
+        (parseclj-lex-token :deref "@" pos))
+
        ((equal char ?#)
         (right-char)
         (let ((char (char-after (point))))
@@ -415,6 +505,23 @@ See `parseclj-lex-token'."
            ((equal char ?_)
             (right-char)
             (parseclj-lex-token :discard "#_" pos))
+           ((equal char ?\()
+            (right-char)
+            (parseclj-lex-token :lambda "#(" pos))
+           ((equal char ?')
+            (right-char)
+            (parseclj-lex-token :var "#'" pos))
+           ((equal char ?\")
+            (parseclj-lex-regex))
+           ((equal char ?:)
+            (parseclj-lex-map-prefix))
+           ((equal char ?\?)
+            (right-char)
+            (if (eq ?@ (char-after (point)))
+                (progn
+                  (right-char)
+                  (parseclj-lex-token :reader-conditional-splice "#?@" pos))
+              (parseclj-lex-token :reader-conditional "#?" pos)))
            ((parseclj-lex-symbol-start-p char t)
             (right-char)
             (parseclj-lex-token :tag (concat "#" (parseclj-lex-get-symbol-at-point (1+ pos))) pos))

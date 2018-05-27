@@ -47,7 +47,11 @@ can be handled with `condition-case'."
 (defun parseclj--find-opening-token (stack closing-token)
   "Scan STACK for an opening-token matching CLOSING-TOKEN."
   (cl-case (parseclj-lex-token-type closing-token)
-    (:rparen :lparen)
+    (:rparen (parseclj-lex-token-type
+              (seq-find (lambda (token)
+                          (member (parseclj-lex-token-type token)
+                                  '(:lparen :lambda)))
+                        stack)))
     (:rbracket :lbracket)
     (:rbrace (parseclj-lex-token-type
               (seq-find (lambda (token)
@@ -192,6 +196,11 @@ functions. Additionally the following options are recognized
       ;; (message "STACK: %S" stack)
       ;; (message "TOKEN: %S\n" token)
 
+      (when (and fail-fast (parseclj-lex-error-p token))
+        (parseclj--error "Invalid token at %s: %S"
+                         (a-get token :pos)
+                         (parseclj-lex-token-form token)))
+
       ;; Reduce based on the top item on the stack (collections)
       (cond
        ((parseclj-lex-leaf-token-p token)
@@ -204,7 +213,7 @@ functions. Additionally the following options are recognized
 
       ;; Reduce based on top two items on the stack (special prefixed elements)
       (let* ((top-value (parseclj--take-value stack value-p))
-             (opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))
+             (opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p parseclj-lex--prefix-tokens))
              new-stack)
         (while (and top-value opening-token)
           ;; (message "Reducing...")
@@ -214,8 +223,25 @@ functions. Additionally the following options are recognized
           (setq new-stack (nthcdr (+ (length top-value) (length opening-token)) stack))
           (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value) options))
 
+          ;; recur
           (setq top-value (parseclj--take-value stack value-p))
-          (setq opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p '(:discard :tag)))))
+          (setq opening-token (parseclj--take-token (nthcdr (length top-value) stack) value-p parseclj-lex--prefix-tokens))))
+
+      ;; Reduce based on top three items on the stack (metadata, namespaced maps)
+      (let* ((top-value-1 (parseclj--take-value stack value-p))
+             (top-value-2 (parseclj--take-value (nthcdr (length top-value-1) stack) value-p))
+             (opening-token (parseclj--take-token (nthcdr (+ (length top-value-1)
+                                                             (length top-value-2)) stack) value-p parseclj-lex--prefix-2-tokens))
+             new-stack)
+        (while (and top-value-1 top-value-2 opening-token)
+          (setq new-stack (nthcdr (apply #'+ (mapcar #'length (list top-value-1 top-value-2 opening-token))) stack))
+          (setq stack (funcall reduce-branch new-stack (car opening-token) (append (cdr opening-token) top-value-2 top-value-1) options))
+
+          ;; recur
+          (setq top-value-1 (parseclj--take-value stack value-p))
+          (setq top-value-2 (parseclj--take-value (nthcdr (length top-value-1) stack) value-p))
+          (setq opening-token (parseclj--take-token (nthcdr (+ (length top-value-1)
+                                                               (length top-value-2)) stack) value-p parseclj-lex--prefix-2-tokens))))
 
       (setq token (parseclj-lex-next)))
 

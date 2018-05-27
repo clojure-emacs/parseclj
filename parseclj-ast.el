@@ -133,6 +133,13 @@ on available options."
                                      :tag (intern (substring (a-get opening-token :form) 1))
                                      :children children)
                   stack))
+      (:metadata (cons (parseclj-ast-node :with-meta
+                                          pos
+                                          :children children)
+                       stack))
+      (:map-prefix (cons (a-assoc (car children)
+                                  :map-prefix opening-token)
+                         stack))
       (t (cons
           (parseclj-ast-node type pos :children children)
           stack)))))
