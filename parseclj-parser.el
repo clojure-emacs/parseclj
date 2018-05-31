@@ -149,6 +149,18 @@ TOKEN-TYPES are the token types to look for."
          (t
           (push (pop stack) result)))))))
 
+(defun parseclj-single-value-p (stack value-p)
+  "Return t if STACK only has a single node for which VALUE-P is true.
+
+This checks if the stack contains a single, fully reduced value, and no
+dangling unmatched tokens.  When parsing with `:read-one' this indicates a
+form can be returned."
+  (and (not (cl-reduce (lambda (bool node)
+                         (or bool (parseclj-lex-token-p node)))
+                       stack
+                       :initial-value nil))
+       (parseclj--take-value stack value-p)))
+
 (defun parseclj-parser (reduce-leaf reduce-branch &optional options)
   "Clojure/EDN stack-based shift-reduce parser.
 
@@ -186,13 +198,17 @@ functions. Additionally the following options are recognized
 - `:tag-readers'
   An association list that describes tag handler functions for any possible
   tag.  This options in only available in `parseedn-read', for more
-  information, please refer to its documentation."
+  information, please refer to its documentation.
+- `:read-one'
+  Return as soon as a single complete value has been read."
   (let ((fail-fast (a-get options :fail-fast t))
+        (read-one (a-get options :read-one))
         (value-p (a-get options :value-p (lambda (e) (not (parseclj-lex-token-p e)))))
         (stack nil)
         (token (parseclj-lex-next)))
 
-    (while (not (eq (parseclj-lex-token-type token) :eof))
+    (while (not (or (and read-one (parseclj-single-value-p stack value-p))
+                    (eq (parseclj-lex-token-type token) :eof)))
       ;; (message "STACK: %S" stack)
       ;; (message "TOKEN: %S\n" token)
 
@@ -252,9 +268,11 @@ functions. Additionally the following options are recognized
                          (a-get token :pos)
                          (parseclj-lex-token-type token))))
 
-    (car (funcall reduce-branch nil (parseclj-lex-token :root "" 1)
-                  (reverse stack)
-                  options))))
+    (if read-one
+        (car (parseclj--take-value stack value-p))
+      (car (funcall reduce-branch nil (parseclj-lex-token :root "" 1)
+                    (reverse stack)
+                    options)))))
 
 (provide 'parseclj-parser)
 ;;; parseclj-parser.el ends here
