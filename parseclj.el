@@ -45,7 +45,9 @@ key-value pairs to specify parsing options.
 - `:lexical-preservation' Retain whitespace, comments, and
   discards.  Defaults to nil.
 - `:fail-fast' Raise an error when encountering invalid syntax.
-  Defaults to t."
+  Defaults to t.
+- `:read-one'
+  Read a single form.  Defaults to false: parse the complete input."
   (if (stringp (car string-and-options))
       (with-temp-buffer
         (insert (car string-and-options))

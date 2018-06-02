@@ -319,6 +319,23 @@
            (new-stack (nthcdr (+ (length top-value) (length opening-token)) stack)))
       top-value)))
 
+(ert-deftest parseclj---read-one-test ()
+  (equal (parseclj-parse-clojure "(+ 1 1) foo bar" :read-one t)
+         '((:node-type . :list)
+           (:position . 1)
+           (:children ((:node-type . :symbol)
+                       (:position . 2)
+                       (:form . "+")
+                       (:value . +))
+                      ((:node-type . :number)
+                       (:position . 4)
+                       (:form . "1")
+                       (:value . 1))
+                      ((:node-type . :number)
+                       (:position . 6)
+                       (:form . "1")
+                       (:value . 1))))))
+
 (provide 'parseclj-test)
 
 ;;; parseclj-test.el ends here
