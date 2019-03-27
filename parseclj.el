@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2018  Arne Brasseur
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
-;; Keywords: lisp
+;; Keywords: lisp clojure edn parser
 ;; Package-Requires: ((emacs "25") (a "0.1.0alpha4"))
 ;; Version: 0.1.0
 
