@@ -55,7 +55,8 @@
                                       :reader-conditional-splice
                                       :var
                                       :deref
-                                      :map-prefix)
+                                      :map-prefix
+                                      :eval)
   "Tokens that modify the form that follows.")
 
 (defvar parseclj-lex--prefix-2-tokens '(:metadata)
@@ -511,6 +512,9 @@ See `parseclj-lex-token'."
            ((equal char ?')
             (right-char)
             (parseclj-lex-token :var "#'" pos))
+           ((equal char ?=)
+            (right-char)
+            (parseclj-lex-token :eval "#=" pos))
            ((equal char ?\")
             (parseclj-lex-regex))
            ((equal char ?:)
