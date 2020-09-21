@@ -71,43 +71,44 @@ OPTIONS is an association list.  This list is also passed down to the
 REDUCE-BRANCH function.  See `parseclj-parser' for more information on
 available options."
   (let ((opening-token-type (parseclj--find-opening-token stack closing-token))
-	(fail-fast (a-get options :fail-fast t)))
+        (fail-fast (a-get options :fail-fast t))
+        (collection nil))
     (if (not opening-token-type)
-	(if fail-fast
-	    (parseclj--error "At position %s, unmatched %S"
-			     (a-get closing-token :pos)
-			     (parseclj-lex-token-type closing-token))
+        (if fail-fast
+            (parseclj--error "At position %s, unmatched %S"
+                             (a-get closing-token :pos)
+                             (parseclj-lex-token-type closing-token))
 
-	  stack)
+          stack)
 
-      (let ((collection nil))
-	;; unwind the stack until opening-token-type is found, adding to collection
-	(while (and stack (not (eq (parseclj-lex-token-type (car stack)) opening-token-type)))
-	  (push (pop stack) collection))
+      (progn
+        ;; unwind the stack until opening-token-type is found, adding to collection
+        (while (and stack (not (eq (parseclj-lex-token-type (car stack)) opening-token-type)))
+          (push (pop stack) collection))
 
-	;; did we find the right token?
-	(if (eq (parseclj-lex-token-type (car stack)) opening-token-type)
-	    (progn
-	      (when fail-fast
-		;; any unreduced tokens left: bail early
-		(when-let ((token (seq-find #'parseclj-lex-token-p collection)))
-		  (parseclj--error "At position %s, unmatched %S"
-				   (a-get token :pos)
-				   (parseclj-lex-token-type token))))
+        ;; did we find the right token?
+        (if (eq (parseclj-lex-token-type (car stack)) opening-token-type)
+            (progn
+              (when fail-fast
+                ;; any unreduced tokens left: bail early
+                (when-let ((token (seq-find #'parseclj-lex-token-p collection)))
+                  (parseclj--error "At position %s, unmatched %S"
+                                   (a-get token :pos)
+                                   (parseclj-lex-token-type token))))
 
-	      ;; all good, call the reducer so it can return an updated stack with a
-	      ;; new node at the top.
-	      (let ((opening-token (pop stack)))
-		(funcall reduce-branch stack opening-token collection options)))
+              ;; all good, call the reducer so it can return an updated stack with a
+              ;; new node at the top.
+              (let ((opening-token (pop stack)))
+                (funcall reduce-branch stack opening-token collection options)))
 
-	  ;; Unwound the stack without finding a matching paren: either bail early
-	  ;; or return the original stack and continue parsing
-	  (if fail-fast
-	      (parseclj--error "At position %s, unmatched %S"
-			       (a-get closing-token :pos)
-			       (parseclj-lex-token-type closing-token))
+          ;; Unwound the stack without finding a matching paren: either bail early
+          ;; or return the original stack and continue parsing
+          (if fail-fast
+              (parseclj--error "At position %s, unmatched %S"
+                               (a-get closing-token :pos)
+                               (parseclj-lex-token-type closing-token))
 
-	    (reverse collection)))))))
+            (reverse collection)))))))
 
 (defun parseclj--take-value (stack value-p)
   "Scan STACK until a value is found.
