@@ -55,12 +55,10 @@ For example: (a-hash-table :foo 123 :bar 456)"
             kv-pairs)
     hash-map))
 
-(defun parseclj-alist-has-key? (coll k)
-  "Check if the given association list COLL has a certain key K."
-  (not (eq (map-elt coll k :not-found) :not-found)))
-
 (defun parseclj-alist-assoc (coll k v)
-  (if (parseclj-alist-has-key? coll k)
+  "Like parseclj-alist-assoc but actually works as advertised, not
+introducing duplicate keys"
+  (if (map-contains-key coll k)
       (mapcar (lambda (entry)
                 (if (equal (car entry) k)
                     (cons k v)
