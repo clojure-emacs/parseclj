@@ -71,12 +71,12 @@ OPTIONS is an association list.  This list is also passed down to the
 REDUCE-BRANCH function.  See `parseclj-parser' for more information on
 available options."
   (let ((opening-token-type (parseclj--find-opening-token stack closing-token))
-        (fail-fast (a-get options :fail-fast t))
+        (fail-fast (parseclj-alist-get options :fail-fast t))
         (collection nil))
     (if (not opening-token-type)
         (if fail-fast
             (parseclj--error "At position %s, unmatched %S"
-                             (a-get closing-token :pos)
+                             (parseclj-alist-get closing-token :pos)
                              (parseclj-lex-token-type closing-token))
 
           stack)
@@ -93,7 +93,7 @@ available options."
                 ;; any unreduced tokens left: bail early
                 (when-let ((token (seq-find #'parseclj-lex-token-p collection)))
                   (parseclj--error "At position %s, unmatched %S"
-                                   (a-get token :pos)
+                                   (parseclj-alist-get token :pos)
                                    (parseclj-lex-token-type token))))
 
               ;; all good, call the reducer so it can return an updated stack with a
@@ -105,7 +105,7 @@ available options."
           ;; or return the original stack and continue parsing
           (if fail-fast
               (parseclj--error "At position %s, unmatched %S"
-                               (a-get closing-token :pos)
+                               (parseclj-alist-get closing-token :pos)
                                (parseclj-lex-token-type closing-token))
 
             (reverse collection)))))))
@@ -209,9 +209,9 @@ functions. Additionally the following options are recognized
   information, please refer to its documentation.
 - `:read-one'
   Return as soon as a single complete value has been read."
-  (let ((fail-fast (a-get options :fail-fast t))
-        (read-one (a-get options :read-one))
-        (value-p (a-get options :value-p (lambda (e) (not (parseclj-lex-token-p e)))))
+  (let ((fail-fast (parseclj-alist-get options :fail-fast t))
+        (read-one (parseclj-alist-get options :read-one))
+        (value-p (parseclj-alist-get options :value-p (lambda (e) (not (parseclj-lex-token-p e)))))
         (stack nil)
         (token (parseclj-lex-next)))
 
@@ -222,7 +222,7 @@ functions. Additionally the following options are recognized
 
       (when (and fail-fast (parseclj-lex-error-p token))
         (parseclj--error "Invalid token at %s: %S"
-                         (a-get token :pos)
+                         (parseclj-alist-get token :pos)
                          (parseclj-lex-token-form token)))
 
       ;; Reduce based on the top item on the stack (collections)
@@ -273,7 +273,7 @@ functions. Additionally the following options are recognized
     (when fail-fast
       (when-let ((token (seq-find #'parseclj-lex-token-p stack)))
         (parseclj--error "At position %s, unmatched %S"
-                         (a-get token :pos)
+                         (parseclj-alist-get token :pos)
                          (parseclj-lex-token-type token))))
 
     (if read-one
