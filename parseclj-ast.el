@@ -47,19 +47,19 @@ Other ATTRIBUTES can be given as a flat list of key-value pairs."
 
 (defun parseclj-ast-node-attr (node attr)
   "Return NODE's ATTR, or nil."
-  (parseclj-alist-get node attr))
+  (map-elt node attr))
 
 (defun parseclj-ast-node-type (node)
   "Return the type of the AST node NODE."
-  (parseclj-alist-get node :node-type))
+  (map-elt node :node-type))
 
 (defun parseclj-ast-children (node)
   "Return children for the AST NODE."
-  (parseclj-alist-get node :children))
+  (map-elt node :children))
 
 (defun parseclj-ast-value (node)
   "Return the value of NODE as another AST node."
-  (parseclj-alist-get node :value))
+  (map-elt node :value))
 
 (defun parseclj-ast-leaf-node-p (node)
   "Return t if the given ast NODE is a leaf node."
@@ -82,8 +82,8 @@ on available options."
       stack
     (cons
      (parseclj-ast-node (parseclj-lex-token-type token)
-                        (parseclj-alist-get token :pos)
-                        :form (parseclj-alist-get token :form)
+                        (map-elt token :pos)
+                        :form (map-elt token :form)
                         :value (parseclj-lex--leaf-token-value token))
      stack)))
 
@@ -100,12 +100,12 @@ on available options."
         (top (car stack)))
     (if (member token-type '(:whitespace :comment))
         ;; merge consecutive whitespace or comment tokens
-        (if (eq token-type (parseclj-alist-get top :node-type))
-            (cons (parseclj-alist-update top :form #'concat (parseclj-alist-get token :form))
+        (if (eq token-type (map-elt top :node-type))
+            (cons (parseclj-alist-update top :form #'concat (map-elt token :form))
                   (cdr stack))
           (cons (parseclj-ast-node (parseclj-lex-token-type token)
-                                   (parseclj-alist-get token :pos)
-                                   :form (parseclj-alist-get token :form))
+                                   (map-elt token :pos)
+                                   :form (map-elt token :form))
                 stack))
       (parseclj-ast--reduce-leaf stack token options))))
 
@@ -118,7 +118,7 @@ brace.
 CHILDREN is the collection of nodes to be reduced into the AST branch node.
 OPTIONS is an association list.  See `parseclj-parse' for more information
 on available options."
-  (let* ((pos (parseclj-alist-get opening-token :pos))
+  (let* ((pos (map-elt opening-token :pos))
          (type (parseclj-lex-token-type opening-token))
          (type (cl-case type
                  (:lparen :list)
@@ -130,7 +130,7 @@ on available options."
       (:discard stack)
       (:tag (cons (parseclj-ast-node :tag
                                      pos
-                                     :tag (intern (substring (parseclj-alist-get opening-token :form) 1))
+                                     :tag (intern (substring (map-elt opening-token :form) 1))
                                      :children children)
                   stack))
       (:metadata (cons (parseclj-ast-node :with-meta
@@ -157,7 +157,7 @@ node.
 OPTIONS is an association list.  See `parseclj-parse' for more information
 on available options."
   (if (eq :discard (parseclj-lex-token-type opening-token))
-      (cons (parseclj-ast-node :discard (parseclj-alist-get opening-token :pos) :children children) stack)
+      (cons (parseclj-ast-node :discard (map-elt opening-token :pos) :children children) stack)
     (let* ((stack (funcall #'parseclj-ast--reduce-branch stack opening-token children options))
            (top (car stack)))
       (if (parseclj-ast-node-p top)
@@ -187,7 +187,7 @@ on available options."
       (when-let (node (car nodes))
         (parseclj-unparse-clojure node))
       (seq-doseq (child (cdr nodes))
-        (when (not (parseclj-alist-get node :lexical-preservation))
+        (when (not (map-elt node :lexical-preservation))
           (insert " "))
         (parseclj-unparse-clojure child)))
     (insert (cdr delimiters))))
@@ -196,9 +196,9 @@ on available options."
   "Insert a string representation of the given AST tag NODE into buffer."
   (progn
     (insert "#")
-    (insert (symbol-name (parseclj-alist-get node :tag)))
+    (insert (symbol-name (map-elt node :tag)))
     (insert " ")
-    (parseclj-unparse-clojure (car (parseclj-alist-get node :children)))))
+    (parseclj-unparse-clojure (car (map-elt node :children)))))
 
 (provide 'parseclj-ast)
 

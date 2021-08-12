@@ -30,6 +30,7 @@
 
 ;;; Code:
 
+(require 'map)
 (require 'parseclj-parser)
 (require 'parseclj-ast)
 
@@ -54,19 +55,9 @@ For example: (a-hash-table :foo 123 :bar 456)"
             kv-pairs)
     hash-map))
 
-(defun parseclj-alist-get (map key &optional not-found)
-  "Like alist-get, but uses equal instead of eq to look up in map MAP key KEY.
-Returns NOT-FOUND if the key is not present, or `nil' if
-NOT-FOUND is not specified."
-  (cl-block nil
-    (seq-doseq (pair map)
-      (when (equal (car pair) key)
-        (cl-return (cdr pair))))
-    not-found))
-
 (defun parseclj-alist-has-key? (coll k)
   "Check if the given association list COLL has a certain key K."
-  (not (eq (parseclj-alist-get coll k :not-found) :not-found)))
+  (not (eq (map-elt coll k :not-found) :not-found)))
 
 (defun parseclj-alist-assoc (coll k v)
   (if (parseclj-alist-has-key? coll k)
@@ -86,7 +77,7 @@ structure. If the key does not exist, nil is passed as the old
 value."
   (parseclj-alist-assoc coll
                         key
-                        (apply #'funcall fn (parseclj-alist-get coll key) args)))
+                        (apply #'funcall fn (map-elt coll key) args)))
 
 (defun parseclj-parse-clojure (&rest string-and-options)
   "Parse Clojure source to AST.
@@ -112,7 +103,7 @@ key-value pairs to specify parsing options.
                       (and (parseclj-ast-node-p e)
                            (not (member (parseclj-ast-node-type e) '(:whitespace :comment :discard))))))
            (options (apply 'parseclj-alist :value-p value-p string-and-options))
-           (lexical? (parseclj-alist-get options :lexical-preservation)))
+           (lexical? (map-elt options :lexical-preservation)))
       (parseclj-parser (if lexical?
                            #'parseclj-ast--reduce-leaf-with-lexical-preservation
                          #'parseclj-ast--reduce-leaf)
@@ -128,7 +119,7 @@ Given an abstract syntax tree AST (as returned by
 `parseclj-parse-clojure'), turn it back into source code, and
 insert it into the current buffer."
   (if (parseclj-ast-leaf-node-p ast)
-      (insert (parseclj-alist-get ast :form))
+      (insert (map-elt ast :form))
     (if (eql (parseclj-ast-node-type ast) :tag)
         (parseclj-ast--unparse-tag ast)
       (parseclj-ast--unparse-collection ast))))
