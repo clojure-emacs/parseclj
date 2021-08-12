@@ -38,14 +38,14 @@
         (lambda (pair)
           (let ((name (car pair))
                 (data (cdr pair)))
-            (if (and (a-get data :source) (a-get data :ast))
+            (if (and (parseclj-alist-get data :source) (parseclj-alist-get data :ast))
                 (let ((test-name (intern (concat "parseclj-parse-clojure:" name))))
                   `(ert-deftest ,test-name ()
                      :tags '(parseclj-ast)
                      (with-temp-buffer
-                       (insert ,(a-get data :source))
+                       (insert ,(parseclj-alist-get data :source))
                        (goto-char 1)
-                       (should (a-equal (parseclj-parse-clojure) ',(a-get data :ast)))))))))
+                       (should (a-equal (parseclj-parse-clojure) ',(parseclj-alist-get data :ast)))))))))
         parseclj-test-data)))
 
 (defmacro define-parseclj-ast-roundtrip-tests ()
@@ -54,13 +54,12 @@
         (lambda (pair)
           (let ((name (car pair))
                 (data (cdr pair)))
-            (if (and (a-get data :ast) (a-get data :source))
+            (if (and (parseclj-alist-get data :ast) (parseclj-alist-get data :source))
                 (let ((test-name (intern (concat "parseclj-ast-rountrip:" name))))
                   `(ert-deftest ,test-name ()
                      :tags '(parseclj-ast-rountrip)
-                     (should (a-equal (parseclj-parse-clojure (parseclj-unparse-clojure-to-string ',(a-get data :ast))) ',(a-get data :ast))))))))
+                     (should (a-equal (parseclj-parse-clojure (parseclj-unparse-clojure-to-string ',(parseclj-alist-get data :ast))) ',(parseclj-alist-get data :ast))))))))
         parseclj-test-data)))
-
 
 (define-parseclj-ast-roundtrip-tests)
 (define-parseclj-parse-clojure-tests)
