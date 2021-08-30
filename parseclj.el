@@ -37,7 +37,9 @@
 (defun parseclj-alist (&rest kvs)
   "Create an association list from the given keys and values KVS.
 Arguments are simply provided in sequence, rather than as lists or cons cells.
-For example: (a-alist :foo 123 :bar 456)"
+For example: (parseclj-alist :foo 123 :bar 456)"
+  ;; Emacs 27:
+  ;; (map-into kvs 'alist)
   (mapcar (lambda (kv) (cons (car kv) (cadr kv))) (seq-partition kvs 2)))
 
 (defun parseclj-hash-table (&rest kvs)
@@ -47,7 +49,9 @@ or cons cells. As \"test\" for the hash table, equal is used. The
 hash table is created without extra storage space, so with a size
 equal to amount of key-value pairs, since it is assumed to be
 treated as immutable.
-For example: (a-hash-table :foo 123 :bar 456)"
+For example: (parseclj-hash-table :foo 123 :bar 456)"
+  ;; Emacs 27:
+  ;; (map-into kvs 'hash-table)
   (let* ((kv-pairs (seq-partition kvs 2))
          (hash-map (make-hash-table :test 'equal :size (length kv-pairs))))
     (seq-do (lambda (pair)
@@ -56,8 +60,11 @@ For example: (a-hash-table :foo 123 :bar 456)"
     hash-map))
 
 (defun parseclj-alist-assoc (coll k v)
-  "Like parseclj-alist-assoc but actually works as advertised, not
-introducing duplicate keys"
+  "Associate a key K with a value V in the association list COLL
+
+Returns a new alist (does not mutate its argument). If an entry
+with the same key is present it will be replaced, otherwise the
+new kv-pair is added to the head of the list."
   (if (map-contains-key coll k)
       (mapcar (lambda (entry)
                 (if (equal (car entry) k)
