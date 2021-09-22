@@ -93,7 +93,20 @@
            (condition-case errdata
                (parseclj-parse-clojure "(1 [2 {3 ( 4}])")
              (parseclj-parser-error (cadr errdata)))
-           "At position 10, unmatched :lparen")))
+           "At position 10, unmatched :lparen"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "{:a 1}}")
+             (parseclj-parser-error (cadr errdata)))
+           "At position 7, unmatched :rbrace"))
+
+  (should (equal
+           (condition-case errdata
+               (parseclj-parse-clojure "'(1))")
+             (parseclj-parser-error (cadr errdata)))
+           "At position 5, unmatched :rparen"))
+  )
 
 (ert-deftest parseclj-parse-clojure-not-fail-fast-test ()
   (should (equal (parseclj-parse-clojure "(1 [2 {3 ( 4}])" :fail-fast nil)
@@ -117,6 +130,21 @@
                                                                   ((:token-type . :lparen) (:form . "(") (:pos . 10))
                                                                   ((:node-type . :number) (:position . 12) (:form . "4") (:value . 4))))))))))))
 
+  (should (equal
+	   (parseclj-parse-clojure "{:a 1}}" :fail-fast nil)
+           '((:node-type . :root)
+	     (:position . 1)
+	     (:children ((:node-type . :map)
+			 (:position . 1)
+			 (:children ((:node-type . :keyword)
+				     (:position . 2)
+				     (:form . ":a")
+				     (:value . :a))
+				    ((:node-type . :number)
+				     (:position . 5)
+				     (:form . "1")
+				     (:value . 1))))))))
+  
   ;; TODO: uneven map forms
   )
 

@@ -1,5 +1,6 @@
 ((emacs-lisp-mode
   (buffer-save-without-query . t)
+  (indent-tabs-mode . nil)
   (eval . (flycheck-mode))
   (eval . (checkdoc-minor-mode))
   (sentence-end-double-space . t)
