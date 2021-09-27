@@ -32,7 +32,6 @@
 
 (require 'cl-lib)
 (require 'subr-x)
-(require 'a)
 (require 'parseclj-lex)
 
 (define-error 'parseclj-parser-error "parseclj: Syntax error")
