@@ -1,10 +1,10 @@
 # Unreleased
 
+## 1.0.0 (2021-09-27)
+
 - Added a `:read-one` option to read/parse a single form at a time
 - Support more reader dispatch macro forms: eval (`#=`), shebang (`#!`),
   symbolic value (`##NaN`)
-
-## Added
 
 ## 0.2.0 (2020-10-12)
 
