@@ -31,8 +31,7 @@
 ;;; Code:
 
 (require 'map)
-(require 'parseclj-parser)
-(require 'parseclj-ast)
+(require 'seq)
 
 (defun parseclj-alist (&rest kvs)
   "Create an association list from the given keys and values KVS.
@@ -41,6 +40,9 @@ For example: (parseclj-alist :foo 123 :bar 456)"
   ;; Emacs 27:
   ;; (map-into kvs 'alist)
   (mapcar (lambda (kv) (cons (car kv) (cadr kv))) (seq-partition kvs 2)))
+
+(require 'parseclj-parser)
+(require 'parseclj-ast)
 
 (defun parseclj-hash-table (&rest kvs)
   "Create a hash table from the given keys and values KVS.
