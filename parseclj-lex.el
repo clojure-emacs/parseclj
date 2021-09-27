@@ -74,7 +74,7 @@ Tokens at a mimimum have these attributes
 - POS: the position in the input, starts from 1 (like point)
 
 Other ATTRIBUTES can be given as a flat list of key-value pairs."
-  (apply 'a-list :token-type type :form form :pos pos attributes))
+  (apply #'parseclj-alist :token-type type :form form :pos pos attributes))
 
 (defun parseclj-lex-error-token (pos &optional error-type)
   "Create a lexer error token starting at POS.

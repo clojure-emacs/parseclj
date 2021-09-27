@@ -27,6 +27,7 @@
 
 ;;; Code
 
+(require 'a)
 (require 'ert)
 (require 'parseclj-ast)
 

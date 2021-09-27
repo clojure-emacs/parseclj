@@ -27,7 +27,6 @@
 
 ;;; Code:
 
-(require 'a)
 (require 'seq)
 (require 'subr-x)
 (require 'parseclj-lex)
