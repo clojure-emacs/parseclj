@@ -1,5 +1,9 @@
 # Unreleased
 
+## 1.0.2 (2021-09-28)
+
+- Remove remaining a.el usage (this time for real)
+
 ## 1.0.1 (2021-09-27)
 
 - Remove remaining a.el usage
