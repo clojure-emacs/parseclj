@@ -3,9 +3,6 @@
 ;; Copyright (C) 2017-2021  Arne Brasseur
 
 ;; Author: Arne Brasseur <arne@arnebrasseur.net>
-;; Keywords: lisp
-;; Package-Requires: ((emacs "25"))
-;; Version: 0.2.0
 
 ;; This file is not part of GNU Emacs.
 
@@ -33,6 +30,7 @@
 (require 'cl-lib)
 (require 'subr-x)
 (require 'parseclj-lex)
+(require 'parseclj-alist)
 
 (define-error 'parseclj-parser-error "parseclj: Syntax error")
 

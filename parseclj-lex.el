@@ -27,6 +27,8 @@
 
 ;;; Code:
 
+(require 'parseclj-alist)
+
 (defvar parseclj-lex--leaf-tokens '(:whitespace
                                     :comment
                                     :symbolic-value
