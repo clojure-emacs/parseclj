@@ -272,7 +272,20 @@
                                             ((:node-type . :number)
                                              (:position . 10)
                                              (:form . "12")
-                                             (:value . 12)))))))))
+                                             (:value . 12))))))))
+        ;; After round-tripping the position of the "12" is no longer the same
+        :roundtrip-ast '((:node-type . :root)
+                         (:position . 1)
+                         (:children . (((:node-type . :list)
+                                        (:position . 1)
+                                        (:children . (((:node-type . :number)
+                                                       (:position . 2)
+                                                       (:form . "10")
+                                                       (:value . 10))
+                                                      ((:node-type . :number)
+                                                       (:position . 5)
+                                                       (:form . "12")
+                                                       (:value . 12)))))))))
 
 
        "tag-1"

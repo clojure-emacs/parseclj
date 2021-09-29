@@ -27,7 +27,6 @@
 
 ;;; Code
 
-(require 'a)
 (require 'ert)
 (require 'parseclj-ast)
 
@@ -46,7 +45,7 @@
                      (with-temp-buffer
                        (insert ,(map-elt data :source))
                        (goto-char 1)
-                       (should (a-equal (parseclj-parse-clojure) ',(map-elt data :ast)))))))))
+                       (should (equal (parseclj-parse-clojure) ',(map-elt data :ast)))))))))
         parseclj-test-data)))
 
 (defmacro define-parseclj-ast-roundtrip-tests ()
@@ -59,7 +58,10 @@
                 (let ((test-name (intern (concat "parseclj-ast-rountrip:" name))))
                   `(ert-deftest ,test-name ()
                      :tags '(parseclj-ast-rountrip)
-                     (should (a-equal (parseclj-parse-clojure (parseclj-unparse-clojure-to-string ',(map-elt data :ast))) ',(map-elt data :ast))))))))
+                     (should (equal (parseclj-parse-clojure (parseclj-unparse-clojure-to-string
+                                                             ',(map-elt data :ast)))
+                                    ',(or (map-elt data :roundtrip-ast)
+                                          (map-elt data :ast)))))))))
         parseclj-test-data)))
 
 (define-parseclj-ast-roundtrip-tests)

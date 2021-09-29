@@ -30,6 +30,7 @@
 (require 'seq)
 (require 'subr-x)
 (require 'parseclj-lex)
+(require 'parseclj-alist)
 
 ;; AST helper functions
 
