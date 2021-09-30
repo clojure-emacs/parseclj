@@ -77,6 +77,17 @@ For example: (parseclj-hash-table :foo 123 :bar 456)"
             kv-pairs)
     hash-map))
 
+(defun parseclj-alist-merge (l1 l2)
+  "Merge two association lists."
+  ;; Emacs 27: (map-merge 'alist l1 l2)
+  (let ((keys (delete-dups (append (mapcar #'car l1) (mapcar #'car l2))))
+        (res '()))
+    (seq-doseq (key keys)
+      (push (or (assoc key l2)
+                (assoc key l1))
+            res))
+    (nreverse res)))
+
 (provide 'parseclj-alist)
 
 ;;; parseclj-alist.el ends here
