@@ -1,5 +1,9 @@
 # Unreleased
 
+## 1.0.4 (2021-09-30)
+
+- Provide parseclj-alist-merge, since we can't use `(map-merge 'alist)` yet in Emacs 25/26.
+
 ## 1.0.3 (2021-09-29)
 
 - Remove remaining a.el usage (this time for real)
