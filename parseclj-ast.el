@@ -120,29 +120,29 @@ OPTIONS is an association list.  See `parseclj-parse' for more information
 on available options."
   (let* ((pos (map-elt opening-token :pos))
          (type (parseclj-lex-token-type opening-token))
-         (type (cl-case type
-                 (:lparen :list)
-                 (:lbracket :vector)
-                 (:lbrace :map)
-                 (t type))))
-    (cl-case type
-      (:root (cons (parseclj-ast-node :root pos :children children) stack))
-      (:discard stack)
-      (:tag (cons (parseclj-ast-node :tag
-                                     pos
-                                     :tag (intern (substring (map-elt opening-token :form) 1))
-                                     :children children)
-                  stack))
-      (:metadata (cons (parseclj-ast-node :with-meta
-                                          pos
-                                          :children children)
-                       stack))
-      (:map-prefix (cons (parseclj-alist-assoc (car children)
-                                               :map-prefix opening-token)
-                         stack))
-      (t (cons
-          (parseclj-ast-node type pos :children children)
-          stack)))))
+         (type (cond
+                ((eq :lparen type) :list)
+                ((eq :lbracket type) :vector)
+                ((eq :lbrace type) :map)
+                (t type))))
+    (cond
+     ((eq :root type) (cons (parseclj-ast-node :root pos :children children) stack))
+     ((eq :discard type) stack)
+     ((eq :tag type) (cons (parseclj-ast-node :tag
+                                              pos
+                                              :tag (intern (substring (map-elt opening-token :form) 1))
+                                              :children children)
+                           stack))
+     ((eq :metadata type) (cons (parseclj-ast-node :with-meta
+                                                   pos
+                                                   :children children)
+                                stack))
+     ((eq :map-prefix type) (cons (parseclj-alist-assoc (car children)
+                                                        :map-prefix opening-token)
+                                  stack))
+     (t (cons
+         (parseclj-ast-node type pos :children children)
+         stack)))))
 
 (defun parseclj-ast--reduce-branch-with-lexical-preservation (stack opening-token children options)
   "Reduce STACK with an AST branch node representing a collection of elements.
@@ -176,12 +176,12 @@ on available options."
 (defun parseclj-ast--unparse-collection (node)
   "Insert a string representation of the given AST branch NODE into buffer."
   (let* ((token-type (parseclj-ast-node-type node))
-         (delimiters (cl-case token-type
-                       (:root (cons "" ""))
-                       (:list (cons "(" ")"))
-                       (:vector (cons "[" "]"))
-                       (:set (cons "#{" "}"))
-                       (:map (cons "{" "}")))))
+         (delimiters (cond
+                      ((eq :root token-type) (cons "" ""))
+                      ((eq :list token-type) (cons "(" ")"))
+                      ((eq :vector token-type) (cons "[" "]"))
+                      ((eq :set token-type) (cons "#{" "}"))
+                      ((eq :map token-type) (cons "{" "}")))))
     (insert (car delimiters))
     (let ((nodes (alist-get ':children node)))
       (when-let (node (car nodes))

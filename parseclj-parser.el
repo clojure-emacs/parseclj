@@ -43,18 +43,19 @@ can be handled with `condition-case'."
 
 (defun parseclj--find-opening-token (stack closing-token)
   "Scan STACK for an opening-token matching CLOSING-TOKEN."
-  (cl-case (parseclj-lex-token-type closing-token)
-    (:rparen (parseclj-lex-token-type
-              (seq-find (lambda (token)
-                          (member (parseclj-lex-token-type token)
-                                  '(:lparen :lambda)))
-                        stack)))
-    (:rbracket :lbracket)
-    (:rbrace (parseclj-lex-token-type
-              (seq-find (lambda (token)
-                          (member (parseclj-lex-token-type token)
-                                  '(:lbrace :set)))
-                        stack)))))
+  (let ((token-type (parseclj-lex-token-type closing-token)))
+    (cond
+     ((eq :rparen token-type) (parseclj-lex-token-type
+                               (seq-find (lambda (token)
+                                           (member (parseclj-lex-token-type token)
+                                                   '(:lparen :lambda)))
+                                         stack)))
+     ((eq :rbracket token-type) :lbracket)
+     ((eq :rbrace token-type) (parseclj-lex-token-type
+                               (seq-find (lambda (token)
+                                           (member (parseclj-lex-token-type token)
+                                                   '(:lbrace :set)))
+                                         stack))))))
 
 (defun parseclj--reduce-coll (stack closing-token reduce-branch options)
   "Reduce collection based on the top of the STACK and a CLOSING-TOKEN.

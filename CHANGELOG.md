@@ -1,5 +1,7 @@
 # Unreleased
 
+- [#34](https://github.com/clojure-emacs/parseclj/pull/34) Replace `cl-case` with `cond`
+
 ## 1.0.4 (2021-09-30)
 
 - Provide parseclj-alist-merge, since we can't use `(map-merge 'alist)` yet in Emacs 25/26.
