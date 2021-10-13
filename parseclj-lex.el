@@ -140,14 +140,15 @@ S goes through three transformations:
       (make-string 1 (string-to-number (substring x 2) 16)))
     (replace-regexp-in-string "\\\\[tbnrf'\"\\]"
                               (lambda (x)
-                                (cl-case (elt x 1)
-                                  (?t "\t")
-                                  (?f "\f")
-                                  (?\" "\"")
-                                  (?r "\r")
-                                  (?n "\n")
-                                  (?\\ "\\\\")
-                                  (t (substring x 1))))
+                                (let ((ch (elt x 1)))
+                                  (cond
+                                   ((eq ?t ch) "\t")
+                                   ((eq ?f ch) "\f")
+                                   ((eq ?\" ch) "\"")
+                                   ((eq ?r ch) "\r")
+                                   ((eq ?n ch) "\n")
+                                   ((eq ?\\ ch) "\\\\")
+                                   (t (substring x 1)))))
                               (substring s 1 -1)))))
 
 (defun parseclj-lex--character-value (c)
@@ -164,16 +165,17 @@ S goes through three transformations:
 
 (defun parseclj-lex--leaf-token-value (token)
   "Parse the given leaf TOKEN to an Emacs Lisp value."
-  (cl-case (parseclj-lex-token-type token)
-    (:number (string-to-number (alist-get :form token)))
-    (:nil nil)
-    (:true t)
-    (:false nil)
-    (:symbol (intern (alist-get :form token)))
-    (:keyword (intern (alist-get :form token)))
-    (:string (parseclj-lex--string-value (alist-get :form token)))
-    (:character (parseclj-lex--character-value (alist-get :form token)))
-    (:symbolic-value (intern (substring (alist-get :form token) 2)))))
+  (let ((token-type (parseclj-lex-token-type token)))
+    (cond
+     ((eq :number token-type) (string-to-number (alist-get :form token)))
+     ((eq :nil token-type) nil)
+     ((eq :true token-type) t)
+     ((eq :false token-type) nil)
+     ((eq :symbol token-type) (intern (alist-get :form token)))
+     ((eq :keyword token-type) (intern (alist-get :form token)))
+     ((eq :string token-type) (parseclj-lex--string-value (alist-get :form token)))
+     ((eq :character token-type) (parseclj-lex--character-value (alist-get :form token)))
+     ((eq :symbolic-value token-type) (intern (substring (alist-get :form token) 2))))))
 
 ;; Stream tokenization
 

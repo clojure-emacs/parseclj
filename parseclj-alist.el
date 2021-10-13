@@ -82,10 +82,12 @@ For example: (parseclj-hash-table :foo 123 :bar 456)"
   ;; Emacs 27: (map-merge 'alist l1 l2)
   (let ((keys (delete-dups (append (mapcar #'car l1) (mapcar #'car l2))))
         (res '()))
-    (seq-doseq (key keys)
-      (push (or (assoc key l2)
-                (assoc key l1))
-            res))
+    (mapcar
+     (lambda (key)
+       (push (or (assoc key l2)
+                 (assoc key l1))
+             res))
+     keys)
     (nreverse res)))
 
 (provide 'parseclj-alist)
