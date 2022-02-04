@@ -46,6 +46,13 @@
                                          (:pos . 1)))))
 
   (with-temp-buffer
+    (insert "123N")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) '((:token-type . :number)
+                                         (:form . "123N")
+                                         (:pos . 1)))))
+
+  (with-temp-buffer
     (insert "123e34M")
     (goto-char 1)
     (should (equal (parseclj-lex-next) '((:token-type . :number)

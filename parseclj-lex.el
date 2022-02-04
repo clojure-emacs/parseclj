@@ -250,6 +250,10 @@ S goes through three transformations:
     (when (eq (char-after (point)) ?M)
       (right-char))
 
+    ;; trailing N clojure.lang.BigInt
+    (when (eq (char-after (point)) ?N)
+      (right-char))
+
     (let ((char (char-after (point))))
       (if (and char (or (and (<= ?a char) (<= char ?z))
                         (and (<= ?A char) (<= char ?Z))
