@@ -1,3 +1,7 @@
+# 1.1.0 (2022-02-07)
+
+- [#36](https://github.com/clojure-emacs/parseclj/pull/36) Add support for bigint
+
 # 1.0.6 (2021-10-13)
 
 - Make sure parseedn and parseclj versions are in sync
