@@ -211,6 +211,18 @@
                               (:form . ":foo-bar")
                               (:value . :foo-bar))))))
 
+       "ratio"
+       (parseclj-alist
+        :tags '(:edn-roundtrip)
+        :source "12/34"
+        :edn '(0.35294117647058826)
+        :ast '((:node-type . :root)
+               (:position . 1)
+               (:children ((:node-type . :number)
+                           (:position . 1)
+                           (:form . "12/34")
+                           (:value . 0.35294117647058826)))))
+
        "vector"
        (parseclj-alist
         :tags '(:edn-roundtrip)
