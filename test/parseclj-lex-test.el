@@ -67,6 +67,13 @@
                                          (:pos . 1)))))
 
   (with-temp-buffer
+    (insert "12/34")
+    (goto-char 1)
+    (should (equal (parseclj-lex-next) '((:token-type . :number)
+                                         (:form . "12/34")
+                                         (:pos . 1)))))
+
+  (with-temp-buffer
     (insert "#?(:clj 1 :cljs 2)")
     (goto-char 1)
     (should (equal (parseclj-lex-next)

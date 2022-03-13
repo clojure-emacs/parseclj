@@ -163,11 +163,20 @@ S goes through three transformations:
      ((eq first-char ?o) (string-to-number (substring c 2) 8))
      (t first-char))))
 
+(defun parseclj-lex--number-value (number-str)
+  "Parse the NUMBER-STR to an Elisp number."
+  (let ((ratio (split-string number-str "/")))
+    (if (= 2 (length ratio))
+        (let ((numerator (string-to-number (car ratio)))
+              (denominator (string-to-number (cadr ratio))))
+          (/ numerator (float denominator)))
+      (string-to-number number-str))))
+
 (defun parseclj-lex--leaf-token-value (token)
   "Parse the given leaf TOKEN to an Emacs Lisp value."
   (let ((token-type (parseclj-lex-token-type token)))
     (cond
-     ((eq :number token-type) (string-to-number (alist-get :form token)))
+     ((eq :number token-type) (parseclj-lex--number-value (alist-get :form token)))
      ((eq :nil token-type) nil)
      ((eq :true token-type) t)
      ((eq :false token-type) nil)
@@ -253,6 +262,11 @@ S goes through three transformations:
     ;; trailing N clojure.lang.BigInt
     (when (eq (char-after (point)) ?N)
       (right-char))
+
+    ;; clojure.lang.Ratio
+    (when (eq (char-after (point)) ?/)
+      (right-char)
+      (parseclj-lex-skip-number))
 
     (let ((char (char-after (point))))
       (if (and char (or (and (<= ?a char) (<= char ?z))

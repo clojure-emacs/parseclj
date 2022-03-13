@@ -130,6 +130,16 @@
                                    (:form . ":foo-bar")
                                    (:value . :foo-bar)))))))))
 
+(ert-deftest parseclj-unparse-clojure-ratio ()
+  (should (equal "12/34"
+                 (parseclj-unparse-clojure-to-string
+                  '((:node-type . :root)
+                    (:position . 1)
+                    (:children ((:node-type . :number)
+                                (:position . 1)
+                                (:form . "12/34")
+                                (:value . 0.35294117647058826))))))))
+
 (ert-deftest parseclj-unparse-clojure-vector ()
   (should (equal "[123]"
                  (parseclj-unparse-clojure-to-string
