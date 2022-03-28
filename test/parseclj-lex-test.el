@@ -309,7 +309,12 @@
   (should (equal (parseclj-lex-symbol-rest-p ?A) t))
   (should (equal (parseclj-lex-symbol-rest-p ?.) t))
   (should (equal (parseclj-lex-symbol-rest-p ?~) nil))
-  (should (equal (parseclj-lex-symbol-rest-p ? ) nil)))
+  (should (equal (parseclj-lex-symbol-rest-p ? ) nil))
+
+  (should (equal (parseclj-lex-symbol-rest-p ?|) nil))
+  (let ((parseclj-lex-symbol-special-chars (cons  ?| parseclj-lex-symbol-special-chars)))
+    (should (equal (parseclj-lex-symbol-rest-p ?|) t)))
+  (should (equal (parseclj-lex-symbol-rest-p ?|) nil)))
 
 (ert-deftest parseclj-lex-test-get-symbol-at-point ()
   (with-temp-buffer

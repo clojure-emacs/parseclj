@@ -29,6 +29,20 @@
 
 (require 'parseclj-alist)
 
+(defcustom parseclj-lex-symbol-special-chars
+  '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/ ?')
+  "The list of characters that can consitute a symbol or keyword's name.
+
+Please note that Clojure might at runtime accept keywords with
+more constituent characters than those found in the default value
+of this variable (which is the officially supported list), but
+the end result should be treated as undefined.  This could be the
+case for example when keywordized maps are created from external
+sources without keyword validation.  Change this value at your
+own risk."
+  :type 'sexp
+  :group 'parseclj)
+
 (defvar parseclj-lex--leaf-tokens '(:whitespace
                                     :comment
                                     :symbolic-value
@@ -303,7 +317,7 @@ alphabetic characters only.  ALPHA-ONLY ensures this behavior."
   (not (not (and char
                  (or (and (<= ?a char) (<= char ?z))
                      (and (<= ?A char) (<= char ?Z))
-                     (and (not alpha-only) (member char '(?. ?* ?+ ?! ?- ?_ ?? ?$ ?% ?& ?= ?< ?> ?/ ?'))))))))
+                     (and (not alpha-only) (member char parseclj-lex-symbol-special-chars)))))))
 
 (defun parseclj-lex-symbol-rest-p (char)
   "Return t if CHAR is a valid character in a symbol.
