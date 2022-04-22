@@ -31,6 +31,7 @@
 (require 'subr-x)
 (require 'parseclj-lex)
 (require 'parseclj-alist)
+(require 'map)
 
 (define-error 'parseclj-parser-error "parseclj: Syntax error")
 
