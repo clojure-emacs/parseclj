@@ -38,9 +38,9 @@ For example: (parseclj-alist :foo 123 :bar 456)"
   (mapcar (lambda (kv) (cons (car kv) (cadr kv))) (seq-partition kvs 2)))
 
 (defun parseclj-alist-assoc (coll k v)
-  "Associate a key K with a value V in the association list COLL
+  "Associate a key K with a value V in the association list COLL.
 
-Returns a new alist (does not mutate its argument). If an entry
+Returns a new alist (does not mutate its argument).  If an entry
 with the same key is present it will be replaced, otherwise the
 new kv-pair is added to the head of the list."
   (if (map-contains-key coll k)
@@ -56,7 +56,7 @@ new kv-pair is added to the head of the list."
 'Updates' a value in an associative collection COLL, where KEY is
 a key and FN is a function that will take the old value and any
 supplied args and return the new value, and returns a new
-structure. If the key does not exist, nil is passed as the old
+structure.  If the key does not exist, nil is passed as the old
 value."
   (parseclj-alist-assoc coll
                         key
@@ -65,7 +65,7 @@ value."
 (defun parseclj-hash-table (&rest kvs)
   "Create a hash table from the given keys and values KVS.
 Arguments are simply provided in sequence, rather than as lists
-or cons cells. As \"test\" for the hash table, equal is used. The
+or cons cells.  As \"test\" for the hash table, equal is used. The
 hash table is created without extra storage space, so with a size
 equal to amount of key-value pairs, since it is assumed to be
 treated as immutable.
@@ -80,7 +80,7 @@ For example: (parseclj-hash-table :foo 123 :bar 456)"
     hash-map))
 
 (defun parseclj-alist-merge (l1 l2)
-  "Merge two association lists."
+  "Merge the association lists L1 and L2."
   ;; Emacs 27: (map-merge 'alist l1 l2)
   (let ((keys (delete-dups (append (mapcar #'car l1) (mapcar #'car l2))))
         (res '()))
