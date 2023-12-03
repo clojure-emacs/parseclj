@@ -1,3 +1,7 @@
+# 1.1.1 (2022-02-07)
+
+- [#41](https://github.com/clojure-emacs/parseclj/pull/41) Add a `lexical-binding` declaration
+
 # 1.1.0 (2022-02-07)
 
 - [#36](https://github.com/clojure-emacs/parseclj/pull/36) Add support for bigint
