@@ -1,4 +1,4 @@
-;;; parseclj-lex.el --- Clojure/EDN Lexer
+;;; parseclj-lex.el --- Clojure/EDN Lexer          -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 2017-2021  Arne Brasseur
 
