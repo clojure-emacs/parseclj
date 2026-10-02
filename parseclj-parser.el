@@ -90,7 +90,7 @@ available options."
             (progn
               (when fail-fast
                 ;; any unreduced tokens left: bail early
-                (when-let ((token (seq-find #'parseclj-lex-token-p collection)))
+                (when-let* ((token (seq-find #'parseclj-lex-token-p collection)))
                   (parseclj--error "At position %s, unmatched %S"
                                    (map-elt token :pos)
                                    (parseclj-lex-token-type token))))
@@ -270,7 +270,7 @@ functions. Additionally the following options are recognized
 
     ;; reduce root
     (when fail-fast
-      (when-let ((token (seq-find #'parseclj-lex-token-p stack)))
+      (when-let* ((token (seq-find #'parseclj-lex-token-p stack)))
         (parseclj--error "At position %s, unmatched %S"
                          (map-elt token :pos)
                          (parseclj-lex-token-type token))))

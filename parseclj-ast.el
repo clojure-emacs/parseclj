@@ -184,7 +184,7 @@ on available options."
                       ((eq :map token-type) (cons "{" "}")))))
     (insert (car delimiters))
     (let ((nodes (alist-get ':children node)))
-      (when-let (node (car nodes))
+      (when-let* ((node (car nodes)))
         (parseclj-unparse-clojure node))
       (seq-doseq (child (cdr nodes))
         (when (not (map-elt node :lexical-preservation))

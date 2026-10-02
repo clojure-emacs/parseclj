@@ -1,3 +1,7 @@
+# Unreleased
+
+- Require Emacs 26.1 or newer.
+
 # 1.1.1 (2022-02-07)
 
 - [#41](https://github.com/clojure-emacs/parseclj/pull/41) Add a `lexical-binding` declaration
