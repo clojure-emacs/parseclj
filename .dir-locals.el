@@ -6,7 +6,7 @@
   (indent-tabs-mode . nil)
   (eval . (flycheck-mode))
   (eval . (checkdoc-minor-mode))
-  (bug-reference-url-format . "https://github.com/clojure-emacs/parseedn/issues/%s")
+  (bug-reference-url-format . "https://github.com/clojure-emacs/parseclj/issues/%s")
   (bug-reference-bug-regexp . "#\\(?2:[[:digit:]]+\\)")
   (fill-column . 80)
   (sentence-end-double-space . t)
