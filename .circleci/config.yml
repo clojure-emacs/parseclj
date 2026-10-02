@@ -21,7 +21,8 @@ commands:
       - run:
           name: Install Emacs latest
           command: |
-            brew install homebrew/cask/emacs
+            brew update
+            brew install emacs
       - run:
           name: Install Eldev
           command: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/circle-eldev > x.sh && source ./x.sh
@@ -94,7 +95,8 @@ jobs:
 
   test-macos-emacs-latest:
     macos:
-      xcode: "14.0.0"
+      xcode: "26.3.0"
+    resource_class: m4pro.medium
     steps:
       - macos-setup
       - test
