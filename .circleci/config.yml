@@ -12,18 +12,6 @@ commands:
           name: Install Eldev
           command: curl -fsSL https://raw.githubusercontent.com/emacs-eldev/eldev/master/webinstall/circle-eldev > x.sh && source ./x.sh
 
-  macos-setup:
-    steps:
-      - checkout
-      - run:
-          name: Install Emacs latest
-          command: |
-            brew update
-            brew install emacs
-      - run:
-          name: Install Eldev
-          command: curl -fsSL https://raw.githubusercontent.com/emacs-eldev/eldev/master/webinstall/circle-eldev > x.sh && source ./x.sh
-
   setup-windows:
     steps:
       - checkout
@@ -67,7 +55,12 @@ jobs:
       xcode: "26.3.0"
     resource_class: m4pro.medium
     steps:
-      - macos-setup
+      - run:
+          name: Install Emacs latest
+          command: |
+            brew update
+            brew install emacs
+      - setup
       - test
 
   test-windows-emacs-latest:
