@@ -123,24 +123,10 @@ workflows:
   ci-test-matrix:
     jobs:
       - test-lint
-      - test-ubuntu-emacs-26:
-          requires:
-            - test-lint
-      - test-ubuntu-emacs-27:
-          requires:
-            - test-lint
-      - test-ubuntu-emacs-28:
-          requires:
-            - test-lint
-      - test-ubuntu-emacs-29:
-          requires:
-            - test-lint
-      - test-ubuntu-emacs-master:
-          requires:
-            - test-lint
-      - test-windows-emacs-latest:
-          requires:
-            - test-lint
-      - test-macos-emacs-latest:
-          requires:
-            - test-ubuntu-emacs-28
+      - test-ubuntu-emacs-26
+      - test-ubuntu-emacs-27
+      - test-ubuntu-emacs-28
+      - test-ubuntu-emacs-29
+      - test-ubuntu-emacs-master
+      - test-windows-emacs-latest
+      - test-macos-emacs-latest
