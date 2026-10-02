@@ -29,14 +29,16 @@ commands:
       - run:
           name: Run regression tests
           command: eldev -dtT -p test
+  compile:
+    steps:
+      - run:
+          name: Byte-compile .el files
+          command: eldev -dtT compile --warnings-as-errors
   lint:
     steps:
       - run:
           name: Run Elisp-lint
           command: eldev lint
-      - run:
-          name: Byte-compile .el files
-          command: eldev -dtT compile --warnings-as-errors
 
 jobs:
   test-ubuntu:
@@ -49,6 +51,7 @@ jobs:
     steps:
       - setup
       - test
+      - compile
 
   test-macos-emacs-latest:
     macos:
@@ -75,7 +78,7 @@ jobs:
 
   test-lint:
     docker:
-      - image: silex/emacs:28-ci
+      - image: silex/emacs:31-ci
     steps:
       - setup
       - lint
