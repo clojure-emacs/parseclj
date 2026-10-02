@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/clojure-emacs/parseclj.svg?branch=master)](https://travis-ci.org/clojure-emacs/parseclj)
+[![CircleCI](https://circleci.com/gh/clojure-emacs/parseclj/tree/main.svg?style=svg)](https://circleci.com/gh/clojure-emacs/parseclj/tree/main)
 
 # Clojure parser for Emacs Lisp
 
