@@ -53,7 +53,7 @@ new kv-pair is added to the head of the list."
 
 (defun parseclj-alist-update (coll key fn &rest args)
   "In collection COLL, at location KEY, apply FN with extra args ARGS.
-'Updates' a value in an associative collection COLL, where KEY is
+\"Updates\" a value in an associative collection COLL, where KEY is
 a key and FN is a function that will take the old value and any
 supplied args and return the new value, and returns a new
 structure.  If the key does not exist, nil is passed as the old

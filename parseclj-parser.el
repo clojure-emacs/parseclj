@@ -38,7 +38,7 @@
 (defun parseclj--error (format &rest args)
   "Signal a parse error.
 Takes a FORMAT string and optional ARGS to be passed to
-`format-message'.  Signals a 'parseclj-parser-error signal, which
+`format-message'.  Signals a `parseclj-parser-error' signal, which
 can be handled with `condition-case'."
   (signal 'parseclj-parser-error (list (apply #'format-message format args))))
 
